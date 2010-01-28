@@ -66,8 +66,8 @@ if ($auth['isAuthenticated'] == 1) {
         <div id="content">
 
             <h1>
-                <img alt="foaf" src="images/foaf.gif" />
-                <strong>FOAF</strong>
+                <img alt="sparul" src="images/rdf.jpg" />
+                <strong>SPARUL.ORG</strong>
             </h1>
 
             <h2></h2>

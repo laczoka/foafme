@@ -25,7 +25,6 @@ require_once('config.php');
 require_once('db.class.php');
 require_once('lib/libAuthentication.php');
 $auth = getAuth();
-
 if ($auth['isAuthenticated'] == 1) {
      $webid = $auth['agent']['webid'];
      $name = !empty($auth['agent']['name'])?$auth['agent']['name']:$webid;
@@ -34,105 +33,64 @@ if ($auth['isAuthenticated'] == 1) {
      }
 }
 
+if (!empty($_REQUEST['webid'])) {
+    $webid = $_REQUEST['webid'];
+}
 ?>
 
-            <!-- personal profile document -->
-            <div style="display:none" typeof="foaf:PersonalProfileDocument" about="">
-                <span rel="foaf:maker" href="#me"></span>
-                <span rel="foaf:primaryTopic" href="#me"></span>
-            </div>
+<form action="index.php" method="get">
+<div style='text-align:center'>
+    <b style='color:blue'>Enter a URI, or LOGIN to see your own</b>
+    <br/>
+    <br/>
+    <input size="40" name="webid" />
+    <br/>
+    <br/>
+    Example: <a href="http://sparul.org/index.php?webid=http%3A%2F%2Fbblfish.net%2Fpeople%2Fhenry%2Fcard">http://bblfish.net/people/henry/card</a> , <a href="http://sparul.org/index.php?webid=http%3A%2F%2Ftobyinkster.co.uk">http://tobyinkster.co.uk/</a>
+</div>
+</form>
 
-            <!-- start tabs container -->
-            <div id="container" typeof="foaf:Person" about="me">
-                <ul>
-                    <li style="list-style-image: none"><a href="#me"><span>Me</span></a></li>
-                    <li style="list-style-image: none"><a href="#friends"><span>Friends</span></a></li>
-                    <li style="list-style-image: none"><a href="#accounts"><span>Accounts</span></a></li>
-                    <li style="list-style-image: none"><a href="#security"><span>Security</span></a></li>
-                    <?php if ( $auth['isAuthenticated'] == 1 || !empty($_REQUEST['webid']) ) { ?>
-                    <li style="list-style-image: none"><a href="#activity"><span>Activity</span></a></li>
-                    <?php } else { ?>
-                    <li style="list-style-image: none"><a href="#interests"><span>Interests</span></a></li>
-                    <?php } ?>
-                    <?php if ($loggedIn) { ?>
-                    <li style="list-style-image: none"><a href="#rawdata"><span>Raw Data</span></a></li>
-                    <?php } ?>
-                </ul>
+<?php
 
-                <!-- start me tab -->
-                <div id="me" class="inputArea">
-                    <?php include('tabme.php'); ?>
-                </div>
-                <!-- end me tab -->
+if (!empty($webid)) {
+    //$webid = $auth['agent']['webid'];
+    $parser = ARC2::getRDFParser();
+    $parser->parse($webid);
+    $triples = $parser->getTriples();
+
+    echo "<h1>Triples</h1>";
+    echo "<table>";
+    echo "<tr><td><b>Subject</b></td><td><b>Predicate</b></td><td><b>Object</b></td></tr>";
+    foreach ($triples as $k => $v) {
+        echo "<tr><td>$v[s]</td><td>$v[p]</td><td>" . wordwrap($v['o'], 40, '<br/>', true) . "</td></tr>";
+    }
+    echo "</table>";
+
+    echo "<h1>RDFa Serializer (ARC2 plugin)</h1>";
+    /* Serializer instantiation */
+    $ser = ARC2::getSer('RDFa', '');
+
+    /* Serialize a triples array */
+    $doc = $ser->getSerializedTriples($triples);
+    echo $doc;
 
 
-                <!-- start friends tab -->
-                <div id="friends" class="inputArea">
-                    <?php include ("tabfriends.php"); ?>
-                </div>
-                <!-- end friends tab -->
+    echo "<h1>Raw Triples</h1>";
+    echo '<pre>';
+    print_r($triples);
+    echo '</pre>';
 
-                <?php if ( $auth['isAuthenticated'] == 1 || !empty($_REQUEST['webid']) ) { ?>
-                <!-- start activites tab -->
-                <div id="activity">Loading...
-                </div>
-                <!-- end activities tab -->
-                <?php } ?>
 
-                <?php if ( $auth['isAuthenticated'] == 1 ) { ?>
-                <!-- start raw data tab -->
-                <div id="rawdata">
-                    <?php include('tabdata.php'); ?>
-                </div>
-                <!-- end raw data tab -->
-                <?php } ?>
 
-                <!-- start accounts tab -->
-                <div id="accounts" class="inputArea">
-                    <?php include ("tabaccounts.php"); ?>
-                </div>
-                <!-- end accounts tab -->
+}
 
-                <!-- start interests tab -->
-                <div id="interests">
-                    <table id="intereststable">
-                        <tr><td></td><td>Description</td></tr>
-                        <tr typeof="foaf:OnlineAccount"><td>Interest: </td><td><input size="20" rel="foaf:interest" id="interest1" onchange="makeTags()" type="text" name="interest1" /></td></tr>
-                        <tr typeof="foaf:OnlineAccount"><td>Interest: </td><td><input size="20" rel="foaf:interest" id="interest2" onchange="makeTags()" type="text" name="interest2" /></td></tr>
-                    </table>
-                    <a href="#" onclick="javascript:addi()">Add</a>
-                </div>
-                <!-- end interests tab -->
-
-                <!-- start security tab -->
-                <div id="security">
-                    <?php include ("tabsecurity.php"); ?>
-                </div>
-                <!-- end security tab -->
-
-            </div>
-            <!-- end tabs container -->
-
-            <script type="text/javascript"> $("#activity").load("tabactivity.php?webid=<?php echo $agent ?>");</script>
-
-            <?php if ( $auth['isAuthenticated'] == 1 || !empty($_REQUEST['webid']) ) { ?>
-            <?php } else { ?>
-            <!-- start foaf file -->
-            <form name="results" action="store.php" method="post" >
-                <div id="form">
-                    <p>Your FOAF file:</p>
-                    <textarea id="rdf" name="rdf" cols="80" rows="20"></textarea>
-                    <br/>
-                        <?php echo $_SERVER['HTTP_HOST'] . ((dirname($_SERVER['PHP_SELF'])=='/')?'':dirname($_SERVER['PHP_SELF'])); ?>/<input id="username" value="" type="text" name="username" /> <button type="submit">Save!</button>
-
-                    <br/><br/>
-                    <p style='display:none' id="saving">Saving will give you the <a href="http://esw.w3.org/topic/WebID">Web ID</a> = <span style="color:blue" id="displayname"></span></p>
-
-                </div>
-            </form>
-            <!-- end foaf file -->
-            <?php } ?>
-
+?>
+<script type='text/javascript'>
+$(document).ready(function() {
+  $('table tbody tr:odd').addClass('odd');
+  $('table tbody tr:even').addClass('even');
+});
+</script>
 
 
 

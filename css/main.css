@@ -56,7 +56,7 @@ input
 .blue { color: blue;}
 
 ul.smaller li {
-    list-style-image: url(foaf.png);
+    list-style-image: url(rdf.png);
 }
 
 .clear {
@@ -222,4 +222,12 @@ a {
 
 .footnote {
     color: #666666;
+}
+
+tr.even {
+    background-color: #eee;
+}
+
+tr.odd {
+    background-color: #ddd;
 }

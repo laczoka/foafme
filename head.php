@@ -77,7 +77,7 @@ $webidbase = preg_replace('/#.*/', '', $webid);
         <meta http-equiv="Content-Style-Type" content="text/css" />
         <meta http-equiv="Content-Script-Type" content="text/javascript" />
         <!-- <base href="<?php echo $agent ?>"> -->
-        <title>FOAF Me</title>
+        <title>SPARUL</title>
         <link rel="stylesheet" href="css/jquery.tabs.css" type="text/css" media="print, projection, screen" />
         <!--
         <link rel="shortcut icon" href="/img/favicon.png" type="image/png" />	
