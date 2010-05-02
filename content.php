@@ -24,7 +24,10 @@
 require_once('config.php');
 require_once('db.class.php');
 require_once('lib/Authentication.php');
+
+$log = Logger::getLogger();
 $auth = new Authentication($GLOBALS['config']);
+$log->logWithTs('   Authentication DONE');
 
 if ($auth->isAuthenticated()) {
     $agent=$auth->getAgent();
@@ -35,11 +38,12 @@ if ($auth->isAuthenticated()) {
      }
 }
 
+
 if (!empty($_REQUEST['webid'])) {
     $pageAgent = new Authentication_AgentARC($GLOBALS['config'], $_REQUEST['webid']);
     $agent = $pageAgent->getAgent();
 }
-
+$log->logWithTs('   Parsing agent\'s FOAF DONE');
 ?>
 
             <!-- personal profile document -->
@@ -67,14 +71,18 @@ if (!empty($_REQUEST['webid'])) {
 
                 <!-- start me tab -->
                 <div id="me" class="inputArea">
-                    <?php include('tabme.php'); ?>
+                    <?php include('tabme.php');
+                        $log->logWithTs('   Rendering Tabme DONE');
+                     ?>
                 </div>
                 <!-- end me tab -->
 
 
                 <!-- start friends tab -->
                 <div id="friends" class="inputArea">
-                    <?php include ("tabfriends.php"); ?>
+                    <?php include ("tabfriends.php"); 
+                        $log->logWithTs('   Rendering Tabme DONE');
+                    ?>
                 </div>
                 <!-- end friends tab -->
 
@@ -88,14 +96,18 @@ if (!empty($_REQUEST['webid'])) {
                 <?php if ( $auth->isAuthenticated() == 1 ) { ?>
                 <!-- start raw data tab -->
                 <div id="rawdata">
-                    <?php include('tabdata.php'); ?>
+                    <?php include('tabdata.php');
+                        $log->logWithTs('   Rendering Tabdata DONE');
+                    ?>
                 </div>
                 <!-- end raw data tab -->
                 <?php } ?>
 
                 <!-- start accounts tab -->
                 <div id="accounts" class="inputArea">
-                    <?php include ("tabaccounts.php"); ?>
+                    <?php include ("tabaccounts.php"); 
+                        $log->logWithTs('   Rendering Tabaccounts DONE');
+                    ?>
                 </div>
                 <!-- end accounts tab -->
 
@@ -112,7 +124,9 @@ if (!empty($_REQUEST['webid'])) {
 
                 <!-- start security tab -->
                 <div id="security">
-                    <?php include ("tabsecurity.php"); ?>
+                    <?php include ("tabsecurity.php");
+                        $log->logWithTs('   Rendering Tabsecurity DONE');
+                    ?>
                 </div>
                 <!-- end security tab -->
 

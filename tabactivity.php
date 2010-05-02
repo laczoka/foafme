@@ -33,14 +33,21 @@ require_once('lib/libActivity.php');
 require_once('lib/Authentication.php');
 require_once('simplepie/1.1.3/simplepie.inc');
 require_once('simplepie/1.1.3/idn/idna_convert.class.php');
+require_once 'Logger.php';
+
+$log = Logger::getLogger();
+$log->logWithTs('Rendering Tabactivity STARTED');
 
 $auth = new Authentication($GLOBALS['config']);
+$log->logWithTs('Authentication DONE');
+
 $agent = $auth->getAgent();
 
 if (!empty($_REQUEST['webid'])) {
     $pageAgent = new Authentication_AgentARC($GLOBALS['config'], $_REQUEST['webid']);
     $agent = $pageAgent->getAgent();
 }
+$log->logWithTs('Parsing Agent\'s FOAF DONE');
 
 $a1 = replace_with_rss($agent['holdsAccount']);
 $a2 = replace_with_rss($agent['accountProfilePage']);
@@ -115,4 +122,5 @@ if ( !empty($feedArray) ) {
     <?php endforeach ?>
 
 	<?php endif ?>
+<?php $log->logWithTs('Rendering Tabactivity DONE'); ?>
 

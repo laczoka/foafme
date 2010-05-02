@@ -24,6 +24,8 @@
 require_once('config.php');
 require_once('db.class.php');
 require_once('lib/Authentication.php');
+require_once 'Logger.php';
+
 $auth = new Authentication($GLOBALS['config']);
 $agent = NULL;
 $webid = NULL;

@@ -22,7 +22,6 @@
  *
  */
 
-
 // head.php contains the init and head information
 // much of the plumbing goes on here, including links to libAuthentication 
 // libACL libImport and the rdfquery javascript libraries, arc2 is also used 
@@ -30,6 +29,7 @@
 // SPARUL, the complexity is abstracted from the developer and you left with 
 // a rich array of profile and relationship data out of the box
 //
+
 require_once('head.php');
 
 
@@ -42,12 +42,15 @@ require_once('header.php');
 // FOAF creator new applications can be added to the framework simply by 
 // replacing content.php
 //
+$log = Logger::getLogger();
+$log->logWithTs('Rendering content START');
 require_once('content.php');
-
+$log->logWithTs('Rendering content END');
 
 // footer.php is a general purpose footer
 //
 require_once('footer.php');
+$log->logWithTs('Rendering footer END');
 
 
 ?>

@@ -37,7 +37,11 @@ $config = array(
         'store_name'     => 'arc_tests',                     // tmp table name
 
 	/* openssl configuration directory */
-        'openssl_config_dir' => '/ebs1/ssl',
+        'openssl_config_dir' => '/home/laczoka/phpdev/foaf/openssl.cnf',
+        /* activate debug mode */
+        'debug_mode'  => true,
+        /* put log files in the following directory */
+        'debug_out_dir'  => '/tmp/',
         /* modes */
         'multi_user'     => true,                            // not yet impl
         'auto_generate'  => true,                            // not yet impl
