@@ -26,7 +26,11 @@ require_once('db.class.php');
 require_once('lib/Authentication.php');
 require_once 'Logger.php';
 
+$log = StackedLogger::getLogger();
+$log->start('Running Authentication in '.__FILE__);
 $auth = new Authentication($GLOBALS['config']);
+$log->stop();
+
 $agent = NULL;
 $webid = NULL;
 

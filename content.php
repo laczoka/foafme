@@ -25,9 +25,10 @@ require_once('config.php');
 require_once('db.class.php');
 require_once('lib/Authentication.php');
 
-$log = Logger::getLogger();
+$log = StackedLogger::getLogger();
+$log->start('Running Authentication in '.__FILE__);
 $auth = new Authentication($GLOBALS['config']);
-$log->logWithTs('   Authentication DONE');
+$log->stop();
 
 if ($auth->isAuthenticated()) {
     $agent=$auth->getAgent();
@@ -40,10 +41,12 @@ if ($auth->isAuthenticated()) {
 
 
 if (!empty($_REQUEST['webid'])) {
+$log->start('Running AgentARC in '.__FILE__);
     $pageAgent = new Authentication_AgentARC($GLOBALS['config'], $_REQUEST['webid']);
+$log->stop();
     $agent = $pageAgent->getAgent();
 }
-$log->logWithTs('   Parsing agent\'s FOAF DONE');
+
 ?>
 
             <!-- personal profile document -->
@@ -71,17 +74,21 @@ $log->logWithTs('   Parsing agent\'s FOAF DONE');
 
                 <!-- start me tab -->
                 <div id="me" class="inputArea">
-                    <?php include('tabme.php');
-                        $log->logWithTs('   Rendering Tabme DONE');
-                     ?>
+                    <?php 
+                      $log->start('Rendering Tabme');
+                      include('tabme.php');
+                      $log->stop();
+                    ?>
                 </div>
                 <!-- end me tab -->
 
 
                 <!-- start friends tab -->
                 <div id="friends" class="inputArea">
-                    <?php include ("tabfriends.php"); 
-                        $log->logWithTs('   Rendering Tabme DONE');
+                    <?php 
+                        $log->start('Rendering Tabme');
+                        include ("tabfriends.php");
+                        $log->stop();
                     ?>
                 </div>
                 <!-- end friends tab -->
@@ -96,8 +103,10 @@ $log->logWithTs('   Parsing agent\'s FOAF DONE');
                 <?php if ( $auth->isAuthenticated() == 1 ) { ?>
                 <!-- start raw data tab -->
                 <div id="rawdata">
-                    <?php include('tabdata.php');
-                        $log->logWithTs('   Rendering Tabdata DONE');
+                    <?php 
+                        $log->start('Rendering Tabdata');
+                        include('tabdata.php');
+                        $log->stop();
                     ?>
                 </div>
                 <!-- end raw data tab -->
@@ -105,8 +114,10 @@ $log->logWithTs('   Parsing agent\'s FOAF DONE');
 
                 <!-- start accounts tab -->
                 <div id="accounts" class="inputArea">
-                    <?php include ("tabaccounts.php"); 
-                        $log->logWithTs('   Rendering Tabaccounts DONE');
+                    <?php
+                        $log->start('Rendering Tabaccounts');
+                        include ("tabaccounts.php");
+                        $log->stop();
                     ?>
                 </div>
                 <!-- end accounts tab -->
@@ -124,8 +135,10 @@ $log->logWithTs('   Parsing agent\'s FOAF DONE');
 
                 <!-- start security tab -->
                 <div id="security">
-                    <?php include ("tabsecurity.php");
-                        $log->logWithTs('   Rendering Tabsecurity DONE');
+                    <?php 
+                        $log->start('Rendering Tabsecurity');
+                        include ("tabsecurity.php");
+                        $log->stop();
                     ?>
                 </div>
                 <!-- end security tab -->

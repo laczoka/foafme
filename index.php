@@ -42,15 +42,16 @@ require_once('header.php');
 // FOAF creator new applications can be added to the framework simply by 
 // replacing content.php
 //
-$log = Logger::getLogger();
-$log->logWithTs('Rendering content START');
+$log = StackedLogger::getLogger();
+$log->start('Rendering content');
 require_once('content.php');
-$log->logWithTs('Rendering content END');
+$log->stop();
 
 // footer.php is a general purpose footer
 //
+$log->start('Rendering footer');
 require_once('footer.php');
-$log->logWithTs('Rendering footer END');
+$log->stop();
 
 
 ?>

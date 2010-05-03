@@ -35,19 +35,22 @@ require_once('simplepie/1.1.3/simplepie.inc');
 require_once('simplepie/1.1.3/idn/idna_convert.class.php');
 require_once 'Logger.php';
 
-$log = Logger::getLogger();
-$log->logWithTs('Rendering Tabactivity STARTED');
+$log = StackedLogger::getLogger();
+$log->start('Rendering Tabactivity');
 
+$log->start('Authentication');
 $auth = new Authentication($GLOBALS['config']);
-$log->logWithTs('Authentication DONE');
+$log->stop();
 
 $agent = $auth->getAgent();
 
 if (!empty($_REQUEST['webid'])) {
+    $log->start('Parsing Agent\'s FOAF');
     $pageAgent = new Authentication_AgentARC($GLOBALS['config'], $_REQUEST['webid']);
+    $log->stop();
     $agent = $pageAgent->getAgent();
 }
-$log->logWithTs('Parsing Agent\'s FOAF DONE');
+
 
 $a1 = replace_with_rss($agent['holdsAccount']);
 $a2 = replace_with_rss($agent['accountProfilePage']);
@@ -122,5 +125,5 @@ if ( !empty($feedArray) ) {
     <?php endforeach ?>
 
 	<?php endif ?>
-<?php $log->logWithTs('Rendering Tabactivity DONE'); ?>
+<?php $log->stop(); ?>
 

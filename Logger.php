@@ -67,6 +67,8 @@ class Logger {
 }
 
 class StackedLogger {
+    const DEBUG_MODE = 'debug_mode';
+    const DEBUG_OUT_DIR = 'debug_out_dir';
 
     const STARTOP = 1;
     const STOPOP = 0;
@@ -78,10 +80,11 @@ class StackedLogger {
     private $msg_stack = array();
     private $log = '';
     private $last_op;
+    private $enabled;
 
     public function __construct($output_dir = '/tmp/', $enabled = false)
     {
-        $this->$enabled = $enabled;
+        $this->enabled = $enabled;
         $this->output_dir = $output_dir;
         $ts = time();
         $logfilebase = $__SERVER['SERVER_NAME'] ? $__SERVER['SERVER_NAME'] : 'perflog';
@@ -90,7 +93,7 @@ class StackedLogger {
 
     public function start($message)
     {
-        if ($this->$enabled) {
+        if ($this->enabled) {
             $timestamp = microtime(true);
             array_push($this->msg_stack, array($message,$timestamp));
             if (self::STARTOP == $this->last_op)
@@ -103,7 +106,7 @@ class StackedLogger {
 
     public function stop()
     {
-        if ($this->$enabled) {
+        if ($this->enabled) {
             $ts = microtime(true);
 
             $this->indent =
