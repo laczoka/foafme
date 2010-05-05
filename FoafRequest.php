@@ -54,7 +54,7 @@ class FoafRequest
                 $pageAgent = new Authentication_AgentARC($GLOBALS['config'],
                                                             $_REQUEST['webid']);
                 $this->foafToBeDisplayed = $pageAgent->getAgent();
-                $this->displayedwebid = $pageAgent->agentId;
+                $this->displayedWebid = $this->foafToBeDisplayed['webid'];
              }
          }
      }

@@ -21,31 +21,12 @@
  * -- Albert Einstein
  *
  */
-require_once('config.php');
-require_once('db.class.php');
-require_once('lib/Authentication.php');
 
-$log = StackedLogger::getLogger();
-$log->start('Running Authentication in '.__FILE__);
-$auth = new Authentication($GLOBALS['config']);
-$log->stop();
+require_once('FoafRequest.php');
 
-if ($auth->isAuthenticated()) {
-    $agent=$auth->getAgent();
-     $webid = $agent['webid'];
-     $name = !empty($agent['name'])?$agent['name']:$webid;
-     if ($webid == $_REQUEST['webid'] || empty($_REQUEST['webid']) ) {
-         $loggedIn = true;
-     }
-}
-
-
-if (!empty($_REQUEST['webid'])) {
-$log->start('Running AgentARC in '.__FILE__);
-    $pageAgent = new Authentication_AgentARC($GLOBALS['config'], $_REQUEST['webid']);
-$log->stop();
-    $agent = $pageAgent->getAgent();
-}
+$foafRequest = FoafRequest::get();
+$agent = $foafRequest->foafToBeDisplayed;
+$webid = $foafRequest->displayedWebid;
 
 ?>
 
@@ -62,12 +43,12 @@ $log->stop();
                     <li style="list-style-image: none"><a href="#friends"><span>Friends</span></a></li>
                     <li style="list-style-image: none"><a href="#accounts"><span>Accounts</span></a></li>
                     <li style="list-style-image: none"><a href="#security"><span>Security</span></a></li>
-                    <?php if ( $auth->isAuthenticated() == 1 || !empty($_REQUEST['webid']) ) { ?>
+                    <?php if ( $foafRequest->isAuth || !empty($_REQUEST['webid']) ) { ?>
                     <li style="list-style-image: none"><a href="#activity"><span>Activity</span></a></li>
                     <?php } else { ?>
                     <li style="list-style-image: none"><a href="#interests"><span>Interests</span></a></li>
                     <?php } ?>
-                    <?php if ($loggedIn) { ?>
+                    <?php if ($foafRequest->isAuth) { ?>
                     <li style="list-style-image: none"><a href="#rawdata"><span>Raw Data</span></a></li>
                     <?php } ?>
                 </ul>
@@ -93,14 +74,14 @@ $log->stop();
                 </div>
                 <!-- end friends tab -->
 
-                <?php if ( $auth->isAuthenticated() || !empty($_REQUEST['webid']) ) { ?>
+                <?php if ( $foafRequest->isAuth || !empty($_REQUEST['webid']) ) { ?>
                 <!-- start activites tab -->
                 <div id="activity">Loading...
                 </div>
                 <!-- end activities tab -->
                 <?php } ?>
 
-                <?php if ( $auth->isAuthenticated() == 1 ) { ?>
+                <?php if ( $foafRequest->isAuth == 1 ) { ?>
                 <!-- start raw data tab -->
                 <div id="rawdata">
                     <?php 
@@ -148,7 +129,7 @@ $log->stop();
 
             <script type="text/javascript"> $("#activity").load("tabactivity.php?webid=<?php echo $agent['webid'] ?>");</script>
 
-            <?php if ( $auth->isAuthenticated() || !empty($_REQUEST['webid']) ) { ?>
+            <?php if ( $foafRequest->isAuth || !empty($_REQUEST['webid']) ) { ?>
             <?php } else { ?>
             <!-- start foaf file -->
             <form action="store.php" method="post" >

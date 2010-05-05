@@ -21,26 +21,11 @@
  * -- Albert Einstein
  *
  */
-require_once('config.php');
-require_once('db.class.php');
-require_once('lib/Authentication.php');
-require_once 'Logger.php';
+require_once('FoafRequest.php');
 
-$log = StackedLogger::getLogger();
-$log->start('Running Authentication in '.__FILE__);
-$auth = new Authentication($GLOBALS['config']);
-$log->stop();
-
-$agent = NULL;
-$webid = NULL;
-
-if ($auth->isAuthenticated()) {
-    $agent = $auth->getAgent();
-    $webid = $agent['webid'];
-    $name = !empty($agent['name'])?$agent['name']:$webid;
-} else {
-    $webid = NULL;
-}
+$foafRequest = FoafRequest::get();
+$agent = $foafRequest->viewer;
+$webid = $foafRequest->authWebid;
 
 ?>
 
