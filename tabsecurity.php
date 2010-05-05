@@ -28,17 +28,13 @@
 // This tab can act as a standalone page or be included from a containter
 require_once('head.php');
 require_once('header.php');
-require_once('lib/Authentication.php');
+require_once('FoafRequest.php');
 
-if ($_REQUEST['webid']) {
-    $pageAgent = new Authentication_AgentARC($GLOBALS['config'], $_REQUEST['webid']);
-    $agent = $pageAgent->getAgent();
-}
+$foafRequest = FoafRequest::get();
+$agent = $foafRequest->foafToBeDisplayed;
+$webid = $foafRequest->displayedWebid;
 
-if ( $auth->isAuthenticated() )
-    $agent = $auth->getAgent();
-
-if ( $auth->isAuthenticated() || !empty($_REQUEST['webid']) ) {
+if ( $foafRequest->isAuth || !empty($_REQUEST['webid']) ) {
     $key_array = $agent['RSAKey'];
 
     print "<h3>Security</h3>";

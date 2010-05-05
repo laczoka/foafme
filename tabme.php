@@ -28,14 +28,15 @@
 require_once('head.php');
 require_once('header.php');
 require_once('FoafRequest.php');
+require_once 'lib/Authentication_Helper.php';
 
 $foafRequest = FoafRequest::get();
 
 $agent = $foafRequest->foafToBeDisplayed;
 $webid = $foafRequest->displayedWebid;
 
-if ( $foafRequest->isAuth || !empty($_REQUEST['webid']) ) {
-    if (!empty($webid)) {
+if ($webid) {
+    if (Authentication_Helper::isValidURL($webid)) {
         print "<script type='text/javascript' src='http://foaf-visualizer.org/embed/widget/?uri=$webid' ></script>";
         ?>
             <script type='text/javascript'>
