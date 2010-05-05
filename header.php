@@ -21,20 +21,11 @@
  * -- Albert Einstein
  *
  */
-require_once('config.php');
-require_once('db.class.php');
-require_once('lib/Authentication.php');
-$auth = new Authentication($GLOBALS['config']);
-$agent = NULL;
-$webid = NULL;
+require_once('FoafRequest.php');
 
-if ($auth->isAuthenticated()) {
-    $agent = $auth->getAgent();
-    $webid = $agent['webid'];
-    $name = !empty($agent['name'])?$agent['name']:$webid;
-} else {
-    $webid = NULL;
-}
+$foafRequest = FoafRequest::get();
+$agent = $foafRequest->viewer;
+$webid = $foafRequest->authWebid;
 
 ?>
 

@@ -27,27 +27,14 @@
 
 require_once('head.php');
 require_once('header.php');
-require_once('lib/Authentication.php');
+require_once('FoafRequest.php');
 
-/*
-$auth = getAuth();
-if ($auth['isAuthenticated'] == 1) {
-    $webid = $auth['agent']['webid'];
-}
+$foafRequest = FoafRequest::get();
 
-if (!empty($_REQUEST['webid'])) {
-    $auth = get_agent($_REQUEST['webid']);
-    $webid = $auth['agent']['webid'];
-}
-*/
-if ($_REQUEST['webid']) {
-    $pageAgent = new Authentication_AgentARC($GLOBALS['config'], $_REQUEST['webid']);
-    $agent = $pageAgent->getAgent();
-}
+$agent = $foafRequest->foafToBeDisplayed;
+$webid = $foafRequest->displayedWebid;
 
-$webid = $agent['webid'];
-
-if ( $auth->isAuthenticated() || !empty($_REQUEST['webid']) ) {
+if ( $foafRequest->isAuth || !empty($_REQUEST['webid']) ) {
     if (!empty($webid)) {
         print "<script type='text/javascript' src='http://foaf-visualizer.org/embed/widget/?uri=$webid' ></script>";
         ?>
