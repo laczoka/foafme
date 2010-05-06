@@ -29,6 +29,11 @@
 
 require_once(dirname(__FILE__)."/../arc/ARC2.php");
 require_once(dirname(__FILE__)."/Authentication_AgentAbstract.php");
+
+require_once(dirname(__FILE__)."/../Logger.php");
+
+$log = StackedLogger::getLogger();
+
 /**
  * @author Akbar Hossain
  * Foaf parser leveraging ARC functionality
@@ -44,26 +49,39 @@ class Authentication_AgentARC extends Authentication_AgentAbstract {
 
     public function __construct($ARCConfig, $agentURI = NULL, $ARCStore = NULL) {
 
+        $log->start("Authentication_AgentARC::__construct()");
+
         $this->ARCConfig = $ARCConfig;
         $this->ARCStore  = $ARCStore;
 
         parent::__construct($agentURI);
+
+        $log->stop();
     }
 
     public function loadAgent() {
 
+            $log->start("Authentication_AgentARC::loadAgent()");
+
             $this->createStore();
 
+            $log->stop();
     }
 
     public function loadErrors() {
+        $log->start("Authentication_AgentARC::loadErrors()");
 
         if (isset($this->ARCStore) && ($errs = $this->ARCStore->getErrors())) {
             $this->errors = $errs;
         }
+
+        $log->stop();
+
     }
 
     public function getAgentProperties() {
+        
+        $log->start("Authentication_AgentARC::getAgentProperties()");
 
         $agent    = NULL;
 
@@ -87,18 +105,26 @@ class Authentication_AgentARC extends Authentication_AgentAbstract {
 
             $agent = Authentication_Helper::safeArrayMerge(array("webid"=>$this->agentId), $agent);
         }
+        
+        $log->stop();
 
         return($agent);
     }
 
     public function getAgentId() {
+       
+        $log->start("Authentication_AgentARC::getPrimaryProfile()");
 
         $agentID = ($agentId = $this->getPrimaryProfile())?$agentId:$this->agentURI;
+        
+        $log->stop();
 
         return($agentID);
     }
 
     private function createStore() {
+
+         $log->start("Authentication_AgentARC::createStore()");
 
         if (!isset($this->ARCStore)) {
 
@@ -118,10 +144,13 @@ class Authentication_AgentARC extends Authentication_AgentAbstract {
 	   appropriate parser, etc. until the triples end up in the store. */
         $this->ARCStore->query('LOAD <'.$this->agentURI.'>');
 
+        $log->stop();
     }
 
     /* Returns an array of the modulus and exponent in the supplied RDF */
     protected function getFoafRSAKey() {
+        
+        $log->start("Authentication_AgentARC::getFoafRSAKey()");        
 
         $modulus = NULL;
         $exponent = NULL;
@@ -171,11 +200,16 @@ class Authentication_AgentARC extends Authentication_AgentAbstract {
         print_r($res);
         print "<pre/>";
         */
+
+        $log->stop();
+
         return($res);
     }
 
 
     protected function getNameParts() {
+
+        $log->start("Authentication_AgentARC::getNameParts()");
 
         $res =  NULL;
 
@@ -237,6 +271,9 @@ class Authentication_AgentARC extends Authentication_AgentAbstract {
         print_r($res);
         print "<pre/>";
         */
+
+        $log->stop();
+
         return $res;
     }
 
@@ -254,6 +291,8 @@ class Authentication_AgentARC extends Authentication_AgentAbstract {
     }
 
     protected function getAllFriends() {
+
+        $log->start("Authentication_AgentARC::getAllFriends()");
 
         $results = NULL;
 
@@ -347,11 +386,17 @@ class Authentication_AgentARC extends Authentication_AgentAbstract {
         print_r($results);
         print "<pre/>";
         */
+
+        $log->stop();
+
         return $results;
 
     }
 
     protected function getAgentNyms() {
+
+        $log->start("Authentication_AgentARC::getAgentNyms()");
+
         $res =  NULL;
 
         if ($this->ARCStore && $this->agentId) {
@@ -425,10 +470,15 @@ class Authentication_AgentARC extends Authentication_AgentAbstract {
         print_r($res);
         print "<pre/>";
         */
+
+        $log->stop();
+
         return $res;
     }
 
     protected function getOpenID() {
+
+        $log->start("Authentication_AgentARC::getOpenID()");
 
         $res =  NULL;
 
@@ -460,10 +510,14 @@ class Authentication_AgentARC extends Authentication_AgentAbstract {
         print_r($res);
         print "<pre/>";
         */
+
+        $log->stop();
+
         return $res;
     }
 
     protected function getPrimaryProfile() {
+
         if ($this->ARCStore) {
 
             /*
