@@ -25,7 +25,6 @@ require_once('config.php');
 require_once('db.class.php');
 require_once 'FoafRequest.php';
 
-
 // Start a session
 session_start();
 $loggedIn = false;
