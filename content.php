@@ -25,7 +25,7 @@
 require_once('FoafRequest.php');
 
 $foafRequest = FoafRequest::get();
-$agent = $foafRequest->foafToBeDisplayed;
+$agent = $foafRequest->displayedAgent;
 $webid = $foafRequest->displayedWebid;
 
 ?>
@@ -56,9 +56,7 @@ $webid = $foafRequest->displayedWebid;
                 <!-- start me tab -->
                 <div id="me" class="inputArea">
                     <?php 
-                      $log->start('Rendering Tabme');
                       include('tabme.php');
-                      $log->stop();
                     ?>
                 </div>
                 <!-- end me tab -->
@@ -67,9 +65,7 @@ $webid = $foafRequest->displayedWebid;
                 <!-- start friends tab -->
                 <div id="friends" class="inputArea">
                     <?php 
-                        $log->start('Rendering Tabme');
                         include ("tabfriends.php");
-                        $log->stop();
                     ?>
                 </div>
                 <!-- end friends tab -->
@@ -85,9 +81,7 @@ $webid = $foafRequest->displayedWebid;
                 <!-- start raw data tab -->
                 <div id="rawdata">
                     <?php 
-                        $log->start('Rendering Tabdata');
                         include('tabdata.php');
-                        $log->stop();
                     ?>
                 </div>
                 <!-- end raw data tab -->
@@ -96,9 +90,7 @@ $webid = $foafRequest->displayedWebid;
                 <!-- start accounts tab -->
                 <div id="accounts" class="inputArea">
                     <?php
-                        $log->start('Rendering Tabaccounts');
                         include ("tabaccounts.php");
-                        $log->stop();
                     ?>
                 </div>
                 <!-- end accounts tab -->
@@ -117,9 +109,7 @@ $webid = $foafRequest->displayedWebid;
                 <!-- start security tab -->
                 <div id="security">
                     <?php 
-                        $log->start('Rendering Tabsecurity');
                         include ("tabsecurity.php");
-                        $log->stop();
                     ?>
                 </div>
                 <!-- end security tab -->

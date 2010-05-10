@@ -26,13 +26,12 @@
 // includes
 require_once('head.php');
 require_once('header.php');
-require_once('lib/Authentication.php');
+require_once('FoafRequest.php');
 
-if ($auth->isAuthenticated()) {
-     $authAgent = $auth->getAgent();
-     $webid = $authAgent['webid'];
-     $name = !empty($authAgent['name'])?$authAgent['name']:$webid;
-}
+
+$foafRequest = FoafRequest::get();
+
+$webid = $foafRequest->displayedWebid;
 
 
 // set up db connection
@@ -78,10 +77,10 @@ $rdf = str_replace($searchstring4, '', $rdf);
                     <h3>Enter FOAF as Raw Data (Beta)  </h3>
                     <textarea style='height:400px' name="rdf" cols="80" rows="80"><?php echo $rdf; ?></textarea>
 
-                    <br/><input id="webid" value="<?php echo $_REQUEST['webid'] ?>" type="hidden" name="webid" />
+                    <br/><input id="webid" value="<?php echo $webid ?>" type="hidden" name="webid" />
 
 
-                    <?php if ($loggedIn) { echo '<input value="Update" type="submit" name="button"/>'; } ?>
+                    <?php if ($foafRequest->isAuth) { echo '<input value="Update" type="submit" name="button"/>'; } ?>
                     <br/>
                     </div>
                 </form>

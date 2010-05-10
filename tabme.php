@@ -32,7 +32,7 @@ require_once 'lib/Authentication_Helper.php';
 
 $foafRequest = FoafRequest::get();
 
-$agent = $foafRequest->foafToBeDisplayed;
+$agent = $foafRequest->displayedAgent;
 $webid = $foafRequest->displayedWebid;
 
 if ($webid) {

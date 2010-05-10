@@ -24,8 +24,8 @@
 require_once('FoafRequest.php');
 
 $foafRequest = FoafRequest::get();
-$agent = $foafRequest->viewer;
-$webid = $foafRequest->authWebid;
+$agent = $foafRequest->viewingAgent;
+$webid = $foafRequest->viewingWebid;
 
 ?>
 

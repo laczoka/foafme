@@ -2,7 +2,7 @@
 
 //-----------------------------------------------------------------------------------------------------------------------------------
 //
-// Filename   : AgentToBeDisplayed.php
+// Filename   : FoafRequest.php
 // Date       : 5th May 2010
 // Version    : 0.1
 //
@@ -33,28 +33,28 @@ class FoafRequest
      private static $instance = NULL;
      public $isAuth = false;
 
-     public $authWebid = NULL;
-     public $viewer = NULL;
+     public $viewingWebid = NULL;
+     public $viewingAgent = NULL;
      
      public $displayedWebid = NULL;
-     public $foafToBeDisplayed = NULL;
+     public $displayedAgent = NULL;
      
      public function  __construct()
      {
          $auth = new Authentication($GLOBALS['config']);
          if ($auth->isAuthenticated()) {
              $this->isAuth = true;
-             $this->authWebid = $auth->webid;
-             $this->viewer = $auth->getAgent();
-             $this->foafToBeDisplayed = $this->viewer;
-             $this->displayedWebid = $this->authWebid;
+             $this->viewingWebid = $auth->webid;
+             $this->viewingAgent = $auth->getAgent();
+             $this->displayedWebid = $this->viewingWebid;
+             $this->displayedAgent = $this->viewingAgent;
          }
          if ($_REQUEST['webid']) {
              if ($_REQUEST['webid'] != $this->displayedWebid) {
                 $pageAgent = new Authentication_AgentARC($GLOBALS['config'],
                                                             $_REQUEST['webid']);
-                $this->foafToBeDisplayed = $pageAgent->getAgent();
-                $this->displayedWebid = $this->foafToBeDisplayed['webid'];
+                $this->displayedAgent = $pageAgent->getAgent();
+                $this->displayedWebid = $this->displayedAgent['webid'];
              }
          }
      }
