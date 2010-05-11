@@ -31,7 +31,7 @@ require_once('lib/libActivity.php');
 require_once('FoafRequest.php');
 
 $foafRequest = FoafRequest::get();
-$agent = $foafRequest->foafToBeDisplayed;
+$agent = $foafRequest->displayedAgent;
 
 if ( $foafRequest->isAuth || !empty($_REQUEST['webid']) ) {
 

@@ -41,9 +41,9 @@ $import = getImport();
 $foafRequest = FoafRequest::get();
 
 if ($foafRequest->isAuth) {
-    $authAgent = $foafRequest->viewer;
+    $authAgent = $foafRequest->viewingAgent;
     $webid = $foafRequest->displayedWebid;
-    $agent = $foafRequest->foafToBeDisplayed;
+    $agent = $foafRequest->displayedAgent;
 }
 
 $webidbase = preg_replace('/#.*/', '', $webid);

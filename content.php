@@ -25,7 +25,7 @@
 require_once('FoafRequest.php');
 
 $foafRequest = FoafRequest::get();
-$agent = $foafRequest->foafToBeDisplayed;
+$agent = $foafRequest->displayedAgent;
 $webid = $foafRequest->displayedWebid;
 
 ?>

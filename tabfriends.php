@@ -30,16 +30,15 @@ require_once('head.php');
 require_once('header.php');
 require_once('FoafRequest.php');
 
-$foafRequest = FoafRequest::get();
 // init
 $friends = 2;
 
 $foafRequest = FoafRequest::get();
 
-$agent = $foafRequest->foafToBeDisplayed;
+$agent = $foafRequest->displayedAgent;
 $webid = $foafRequest->displayedWebid;
 
-$webid_viewer = $foafRequest->authWebid;
+$webid_viewer = $foafRequest->viewingWebid;
 $webid_owner = $foafRequest->displayedWebid;
 
 $canEdit = false;

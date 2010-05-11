@@ -31,7 +31,7 @@ require_once('header.php');
 require_once('FoafRequest.php');
 
 $foafRequest = FoafRequest::get();
-$agent = $foafRequest->foafToBeDisplayed;
+$agent = $foafRequest->displayedAgent;
 $webid = $foafRequest->displayedWebid;
 
 if ( $foafRequest->isAuth || !empty($_REQUEST['webid']) ) {
