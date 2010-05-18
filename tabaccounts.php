@@ -28,15 +28,12 @@
 require_once('head.php');
 require_once('header.php');
 require_once('lib/libActivity.php');
-require_once('lib/Authentication.php');
+require_once('FoafRequest.php');
 
-if ($_REQUEST['webid']) {
-    $pageAgent = new Authentication_AgentARC($GLOBALS['config'], $_REQUEST['webid']);
-    $agent = $pageAgent->getAgent();
-}
+$foafRequest = FoafRequest::get();
+$agent = $foafRequest->displayedAgent;
 
-
-if ( $auth->isAuthenticated() || !empty($_REQUEST['webid']) ) {
+if ( $foafRequest->isAuth || !empty($_REQUEST['webid']) ) {
 
     $a1 = replace_with_rss(isset($agent['holdsAccount']) ? $agent['holdsAccount'] : NULL);
     $a2 = replace_with_rss(isset($agent['accountProfilePage']) ? $agent['accountProfilePage'] : NULL);

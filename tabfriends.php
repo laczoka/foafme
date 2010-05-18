@@ -28,24 +28,18 @@
 // This tab can act as a standalone page or be included from a containter
 require_once('head.php');
 require_once('header.php');
-require_once('lib/Authentication.php');
+require_once('FoafRequest.php');
 
 // init
 $friends = 2;
 
-if ($auth->isAuthenticated()) {
-    $webid = $agent['webid'];
-    $webid_viewer = $agent['webid'];
-}
+$foafRequest = FoafRequest::get();
 
-if (!empty($_REQUEST['webid'])) {
-    $webid = $_REQUEST['webid'];
-    $webid_owner = $_REQUEST['webid'];
-    if ( $webid_owner != $webid_viewer) {
-        $pageAgent = new Authentication_AgentARC($GLOBALS['config'], $_REQUEST['webid']);
-        $agent = $pageAgent->getAgent();
-    }
-}
+$agent = $foafRequest->displayedAgent;
+$webid = $foafRequest->displayedWebid;
+
+$webid_viewer = $foafRequest->viewingWebid;
+$webid_owner = $foafRequest->displayedWebid;
 
 $canEdit = false;
 if (!empty($webid)) {
@@ -159,7 +153,7 @@ if ( !empty($webid_owner) || !empty($webid_viewer) ) {
                 <br/>
 
                 <?php
-                if ( $auth->isAuthenticated() || empty($_REQUEST['webid']) ) {
+                if ( $foafRequest->isAuth || empty($_REQUEST['webid']) ) {
 
                     print '<a id="addf" href="#" onclick="javascript:addf(this)">Add</a>';
 

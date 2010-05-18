@@ -23,7 +23,7 @@
  */
 require_once('config.php');
 require_once('db.class.php');
-require_once('lib/Authentication.php');
+require_once 'FoafRequest.php';
 
 // Start a session
 session_start();
@@ -38,21 +38,14 @@ require_once("lib/libImport.php");
 // Check to see if we are importing a WebID, if so populate $import
 $import = getImport();
 
-// init
-$auth = new Authentication($GLOBALS['config']);
+$foafRequest = FoafRequest::get();
 
-if ($auth->isAuthenticated()) {
-    $authAgent = $auth->getAgent();
-    $webid = $authAgent['webid'];
-    $agent = $authAgent['webid'];
+if ($foafRequest->isAuth) {
+    $authAgent = $foafRequest->viewingAgent;
+    $webid = $foafRequest->displayedWebid;
+    $agent = $foafRequest->displayedAgent;
 }
 
-if (!empty($_REQUEST['webid'])) {
-    $authAgentArc = new Authentication_AgentARC($GLOBALS['config'], $_REQUEST['webid']);
-    $authAgent = $authAgentArc->getAgent();
-    $webid = $authAgent['webid'];
-    $agent = $authAgent['webid'];
-}
 $webidbase = preg_replace('/#.*/', '', $webid);
 
 ?>
