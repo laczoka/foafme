@@ -493,8 +493,8 @@ class Authentication_AgentARC extends Authentication_AgentAbstract {
 
             if ($rows = $this->ARCStore->query($q, 'rows')) {
                 foreach ($rows as $row) {
-//                    print "primaryTopic " . $row['primaryTopic'] . "<br/>";
-                    return $row['primaryTopic'];
+                    if (0==strcmp($row['x'],$this->agentURI))
+                        return $row['primaryTopic'];
                 }
             }
         }
