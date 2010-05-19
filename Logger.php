@@ -149,7 +149,7 @@ class StackedLogger {
     public function  __destruct() {
         if ($this->enabled) {
             $loghandle = fopen($this->logfile, 'w');
-            $this->log = $_SERVER['REQUEST_URI'].'\n\n'.$this->log;
+            $this->log = $_SERVER['REQUEST_URI']."\n\n".$this->log;
             fwrite($loghandle, $this->log);
             fclose($loghandle);
         }
