@@ -313,8 +313,11 @@ class Authentication_AgentARC extends Authentication_AgentAbstract {
 			 OPTIONAL { ?y foaf:homepage ?homepage } .
 		         OPTIONAL { ?y foaf:accountName ?accountName } .
 	        }";
-
-            if ($rows = $this->ARCStore->query($q, 'rows')) {
+            $this->log->start("ARC Query GetAllFriends");
+            $rows = $this->ARCStore->query($q, 'rows');
+            $this->log->stop();
+            
+            if ($rows) {
                 $res=NULL;
                 foreach ($rows as $row) {
                     if ( (strcmp($row['x'],$this->agentId)==0) && (strcmp($row['y'],$this->agentId)!=0) ) {
