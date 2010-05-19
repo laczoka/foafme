@@ -44,7 +44,7 @@ class Logger {
         $this->enabled = $enabled;
         $this->directory_output = $dir_out;
         $ts = time();
-        $logfilebase = $__SERVER['SERVER_NAME'] ? $__SERVER['SERVER_NAME'] : 'perflog';
+        $logfilebase = 'perflog';
         $this->logfile = $this->directory_output.$logfilebase.'.'.$ts.'.log';
         $this->loghandle = fopen($this->logfile, 'w');
     }
@@ -149,6 +149,7 @@ class StackedLogger {
     public function  __destruct() {
         if ($this->enabled) {
             $loghandle = fopen($this->logfile, 'w');
+            $this->log = $_SERVER['REQUEST_URI'].'\n\n'.$this->log;
             fwrite($loghandle, $this->log);
             fclose($loghandle);
         }

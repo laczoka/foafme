@@ -142,7 +142,9 @@ class Authentication_AgentARC extends Authentication_AgentAbstract {
         /* LOAD will call the Web reader, which will call the
 	   format detector, which in turn triggers the inclusion of an
 	   appropriate parser, etc. until the triples end up in the store. */
+        $this->log->start("ARC Query: LOAD <".$this->agentURI.">");
         $this->ARCStore->query('LOAD <'.$this->agentURI.'>');
+        $this->log->stop();
 
         $this->log->stop();
     }
@@ -418,10 +420,11 @@ class Authentication_AgentARC extends Authentication_AgentAbstract {
                           OPTIONAL { ?x foaf:weblog ?weblog } .
 			  OPTIONAL { ?y foaf:accountProfilePage ?accountProfilePage } .
 		        }";
-
-            if ($rows = $this->ARCStore->query($q, 'rows')) {
-                print_r($con);
-
+            $this->log->start("ARC Query Nyms");
+            $rows = $this->ARCStore->query($q, 'rows');
+            $this->log->stop();
+            if ($rows) {
+                
                 foreach ($rows as $row) {
                     if ( (strcmp($row['x'],$this->agentId)==0) ) {
 
