@@ -22,10 +22,15 @@
  *
  */
 require_once('FoafRequest.php');
+require_once 'Logger.php';
+
+$log = StackedLogger::getLogger();
+$log->start('Running Authentication in '.__FILE__);
 
 $foafRequest = FoafRequest::get();
 $agent = $foafRequest->viewingAgent;
 $webid = $foafRequest->viewingWebid;
+$log->stop();
 
 ?>
 

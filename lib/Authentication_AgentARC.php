@@ -29,6 +29,9 @@
 
 require_once(dirname(__FILE__)."/../arc/ARC2.php");
 require_once(dirname(__FILE__)."/Authentication_AgentAbstract.php");
+
+require_once(dirname(__FILE__)."/../Logger.php");
+
 /**
  * @author Akbar Hossain
  * Foaf parser leveraging ARC functionality
@@ -42,28 +45,43 @@ class Authentication_AgentARC extends Authentication_AgentAbstract {
     private $ARCConfig = NULL;
     private $ARCStore  = NULL;
 
+    private $log;
+
     public function __construct($ARCConfig, $agentURI = NULL, $ARCStore = NULL) {
+        $this->log = StackedLogger::getLogger();
+        $this->log->start("Authentication_AgentARC::__construct()");
 
         $this->ARCConfig = $ARCConfig;
         $this->ARCStore  = $ARCStore;
 
         parent::__construct($agentURI);
+
+        $this->log->stop();
     }
 
     public function loadAgent() {
 
+            $this->log->start("Authentication_AgentARC::loadAgent()");
+
             $this->createStore();
 
+            $this->log->stop();
     }
 
     public function loadErrors() {
+        $this->log->start("Authentication_AgentARC::loadErrors()");
 
         if (isset($this->ARCStore) && ($errs = $this->ARCStore->getErrors())) {
             $this->errors = $errs;
         }
+
+        $this->log->stop();
+
     }
 
     public function getAgentProperties() {
+        
+        $this->log->start("Authentication_AgentARC::getAgentProperties()");
 
         $agent    = NULL;
 
@@ -87,18 +105,26 @@ class Authentication_AgentARC extends Authentication_AgentAbstract {
 
             $agent = Authentication_Helper::safeArrayMerge(array("webid"=>$this->agentId), $agent);
         }
+        
+        $this->log->stop();
 
         return($agent);
     }
 
     public function getAgentId() {
+       
+        $this->log->start("Authentication_AgentARC::getPrimaryProfile()");
 
         $agentID = ($agentId = $this->getPrimaryProfile())?$agentId:$this->agentURI;
+        
+        $this->log->stop();
 
         return($agentID);
     }
 
     private function createStore() {
+
+         $this->log->start("Authentication_AgentARC::createStore()");
 
         if (!isset($this->ARCStore)) {
 
@@ -116,12 +142,17 @@ class Authentication_AgentARC extends Authentication_AgentAbstract {
         /* LOAD will call the Web reader, which will call the
 	   format detector, which in turn triggers the inclusion of an
 	   appropriate parser, etc. until the triples end up in the store. */
+        $this->log->start("ARC Query: LOAD <".$this->agentURI.">");
         $this->ARCStore->query('LOAD <'.$this->agentURI.'>');
+        $this->log->stop();
 
+        $this->log->stop();
     }
 
     /* Returns an array of the modulus and exponent in the supplied RDF */
     protected function getFoafRSAKey() {
+        
+        $this->log->start("Authentication_AgentARC::getFoafRSAKey()");
 
         $modulus = NULL;
         $exponent = NULL;
@@ -171,11 +202,16 @@ class Authentication_AgentARC extends Authentication_AgentAbstract {
         print_r($res);
         print "<pre/>";
         */
+
+        $this->log->stop();
+
         return($res);
     }
 
 
     protected function getNameParts() {
+
+        $this->log->start("Authentication_AgentARC::getNameParts()");
 
         $res =  NULL;
 
@@ -237,6 +273,9 @@ class Authentication_AgentARC extends Authentication_AgentAbstract {
         print_r($res);
         print "<pre/>";
         */
+
+        $this->log->stop();
+
         return $res;
     }
 
@@ -255,6 +294,8 @@ class Authentication_AgentARC extends Authentication_AgentAbstract {
 
     protected function getAllFriends() {
 
+        $this->log->start("Authentication_AgentARC::getAllFriends()");
+
         $results = NULL;
 
         if ($this->ARCStore && $this->agentId) {
@@ -272,8 +313,11 @@ class Authentication_AgentARC extends Authentication_AgentAbstract {
 			 OPTIONAL { ?y foaf:homepage ?homepage } .
 		         OPTIONAL { ?y foaf:accountName ?accountName } .
 	        }";
-
-            if ($rows = $this->ARCStore->query($q, 'rows')) {
+            $this->log->start("ARC Query GetAllFriends");
+            $rows = $this->ARCStore->query($q, 'rows');
+            $this->log->stop();
+            
+            if ($rows) {
                 $res=NULL;
                 foreach ($rows as $row) {
                     if ( (strcmp($row['x'],$this->agentId)==0) && (strcmp($row['y'],$this->agentId)!=0) ) {
@@ -347,11 +391,17 @@ class Authentication_AgentARC extends Authentication_AgentAbstract {
         print_r($results);
         print "<pre/>";
         */
+
+        $this->log->stop();
+
         return $results;
 
     }
 
     protected function getAgentNyms() {
+
+        $this->log->start("Authentication_AgentARC::getAgentNyms()");
+
         $res =  NULL;
 
         if ($this->ARCStore && $this->agentId) {
@@ -373,10 +423,11 @@ class Authentication_AgentARC extends Authentication_AgentAbstract {
                           OPTIONAL { ?x foaf:weblog ?weblog } .
 			  OPTIONAL { ?y foaf:accountProfilePage ?accountProfilePage } .
 		        }";
-
-            if ($rows = $this->ARCStore->query($q, 'rows')) {
-                print_r($con);
-
+            $this->log->start("ARC Query Nyms");
+            $rows = $this->ARCStore->query($q, 'rows');
+            $this->log->stop();
+            if ($rows) {
+                
                 foreach ($rows as $row) {
                     if ( (strcmp($row['x'],$this->agentId)==0) ) {
 
@@ -425,10 +476,15 @@ class Authentication_AgentARC extends Authentication_AgentAbstract {
         print_r($res);
         print "<pre/>";
         */
+
+        $this->log->stop();
+
         return $res;
     }
 
     protected function getOpenID() {
+
+        $this->log->start("Authentication_AgentARC::getOpenID()");
 
         $res =  NULL;
 
@@ -460,10 +516,16 @@ class Authentication_AgentARC extends Authentication_AgentAbstract {
         print_r($res);
         print "<pre/>";
         */
+
+        $this->log->stop();
+
         return $res;
     }
 
     protected function getPrimaryProfile() {
+
+        $this->log->start("Authentication_AgentARC::getPrimaryProfile()");
+
         if ($this->ARCStore) {
 
             /*
@@ -493,11 +555,14 @@ class Authentication_AgentARC extends Authentication_AgentAbstract {
 
             if ($rows = $this->ARCStore->query($q, 'rows')) {
                 foreach ($rows as $row) {
-//                    print "primaryTopic " . $row['primaryTopic'] . "<br/>";
-                    return $row['primaryTopic'];
+                    if (0==strcmp($row['x'],$this->agentURI)) {
+                        $this->log->stop(); // match found
+                        return $row['primaryTopic'];
+                    }
                 }
             }
         }
+        $this->log->stop(); // no matching foaf found
     }
 
 }
