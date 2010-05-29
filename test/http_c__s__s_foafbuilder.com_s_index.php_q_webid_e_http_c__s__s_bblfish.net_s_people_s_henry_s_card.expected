@@ -1,0 +1,1141 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML+RDFa 1.0//EN"
+    "http://www.w3.org/MarkUp/DTD/xhtml-rdfa-1.dtd">
+<!--
+ * FOAF Me : FOAF Me Home Page and FOAF creator wizard.
+ * Copyright (c) http://foaf.me/
+ * AGPL (AGPL-license.txt) license.
+ *
+-->
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:xsd="http://www.w3.org/2001/XMLSchema#"
+      xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+      xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+      xmlns:dc="http://purl.org/dc/elements/1.1/"
+      xmlns:dcterms="http://purl.org/dc/terms/"
+      xmlns:foaf="http://xmlns.com/foaf/0.1/"
+      xmlns:vcard="http://www.w3.org/2006/vcard/ns#"
+      xmlns:biografr="http://biografr.com/ontology#">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+        <meta http-equiv="Content-Style-Type" content="text/css" />
+        <meta http-equiv="Content-Script-Type" content="text/javascript" />
+        <title>FOAF Me</title>
+        <link rel="stylesheet" href="css/jquery.tabs.css" type="text/css" media="print, projection, screen" />
+        <!--
+        <link rel="shortcut icon" href="/img/favicon.png" type="image/png" />	
+        -->
+        <link rel="stylesheet" type="text/css" title="default" href="css/main.css" />
+        <link rel="shortcut icon" href="favicon.ico" type="image/x-icon" />
+        <script type="text/javascript" src="js/jquery/1.3.1/jquery.min.js"></script>
+        <script type="text/javascript" src="js/jquery/jquery.tabs.pack.js"></script>
+        <script type="text/javascript" src="js/jquery.rdfquery.core-1.0.js"></script>
+        <script type="text/javascript" src="js/jquery.rdfquery.rdfa-1.0.js"></script>
+        <script type="text/javascript" src="js/jquery.rdfquery.rules-1.0.js"></script>
+        <script type="text/javascript" src="js/jquery.editinplace.js"></script>
+        <script type="text/javascript" src="js/jquery.json-1.3.js"></script>
+
+
+        <link rel="stylesheet" href="css/jquery.tabs-ie.css" type="text/css" media="projection, screen" />
+        <link href="favicon.ico" rel="shortcut icon" type="image/x-icon" />
+
+        <script type="text/javascript">
+            // <!--
+
+            /* JQuery Script */
+            /*****************/       
+
+            // Initialise page
+            $(function() {
+                $('#container').tabs({ fxFade: true, fxSpeed: 'fast' });
+                gGeneratorAgent = 'http://foafbuilder.com';
+                gErrorReportsTo = 'mailto:error@foafbuilder.com';
+                makeTags();
+            });
+
+
+            // TODO: make this more generic
+            function adda() {
+                $("#accounts tr:last").clone().appendTo("#accountstable");
+            }
+
+            // TODO: make this more generic
+            function addi() {
+                $("#interests tr:last").clone().appendTo("#intereststable");
+            }
+
+            // TODO: make this more generic
+            function del(el) {
+                str = "#" + el;
+                frag = $(str).parent().parent().rdf().databank.triples()[0].subject.value;
+
+                var re = new RegExp("[0-9A-Za-z]*$","ig");
+                var resultArray = re.exec(frag);
+
+                while (resultArray) {
+                    frag = resultArray[0];
+                    resultArray = re.exec(str);
+                }
+
+                frag = "#" + frag;
+                var sparul = 'DELETE { ';
+                $(str).parent().parent().rdf().databank.triples().each(function () { sparul += this + ' '; } );
+                sparul += ' } ';
+                //alert('DELETE:  This funcionality is in Alpha ' + sparul);
+                jQuery.post( 'http://bblfish.net/people/henry/card', sparul );
+
+                $(str).parent().parent().remove();
+                //location.reload();
+            }
+
+
+            // TODO: use RDFQuery for this
+            function makeTags() {
+
+                // set uri from nick
+                if ( $("#nick").val() != "" ) {
+                    $("#username").val($("#nick").val());
+                } else {
+                    return;
+                }
+
+                // set homepage from nick
+                if ( $("#homepage").val() == "") {
+                                        $("#homepage").val( "http://foafbuilder.com/" + $("#nick").val() );
+                    $("#displayname").html( "http://foafbuilder.com/" + $("#nick").val() + "#me" );
+                    $("#saving").css("display", "inline");;
+                }
+
+                rdf  = '<rdf:RDF xmlns:rdf=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#\"\n      ' +
+                    'xmlns:rdfs=\"http://www.w3.org/2000/01/rdf-schema#\"\n      ' +
+                    'xmlns:foaf=\"http://xmlns.com/foaf/0.1/\"\n      ' +
+                    'xmlns:rsa=\"http://www.w3.org/ns/auth/rsa#\"\n      ' +
+                    'xmlns:cert=\"http://www.w3.org/ns/auth/cert#\"\n      ' +
+                    'xmlns:admin=\"http://webns.net/mvcb/\">\n';
+
+                // preprocess
+
+                // PersonalProfileDocument
+                $("[typeof=foaf:PersonalProfileDocument]") .each(function (i) {
+                    rdf += makeStartTag(this);
+                    $(this).find("[property],[rel]").each( function(){ rdf += (makeTag(this)) ; }  );
+                    rdf += makeEndTag(this);
+
+                });
+
+                // Person #me
+                $("[typeof=foaf:Person]:first").each(function (i) {
+
+                    // Profile
+                    rdf += makeStartTag(this);
+                    $("#me").find("[property],[rel]").each( function(){ rdf += (makeTag(this)) }  );
+                    $("#accounts").find("[property],[rel]").each( function(){ rdf += (makeTag(this)) }  );
+                    $("#interests").find("[property],[rel]").each( function(){ rdf += (makeTag(this)) }  );
+
+                    // Friends tab
+                    var friends = '';
+                    $("#friends [typeof=foaf:Person]").each(function (i) {
+                        var friend = ''
+                        $(this).find("[property],[rel]").each( function(){ friend += '' + makeTag(this)? '        ' + makeTag(this):'' ; }  );
+                        if (friend) {
+                            friends = '        ' + makeStartTag(this);
+                            friends += friend;
+                            friends += '        ' + makeEndTag(this);
+                            rdf += '    <foaf:knows>\n';
+                            rdf += friends;
+                            rdf += '    </foaf:knows>\n';
+                        }
+                    });
+
+                    rdf += makeEndTag(this);
+                });
+
+                // Security tab
+                var id = '';
+                var cert = '';
+                $("#security [typeof]").each(function (i) {
+                    $(this).parent().find("[property],[rel]").each( function(){ cert += '' + makeTag(this)? '        ' + makeTag(this):'' ; }  );
+                    if (cert) {
+                        id += '    ' + makeStartTag(this);
+                        id += cert;
+                        id += '    ' + makeEndTag(this);
+                    }
+                });
+                if (id) {
+                    rdf += '<rdf:Description>\n<rdf:type rdf:resource="http://www.w3.org/ns/auth/rsa#RSAPublicKey"/>\n<cert:identity rdf:resource="#me"/>\n';
+                    rdf += cert;
+                    rdf += '</rdf:Description>\n';
+                }
+
+                rdf += '</rdf:RDF>\n'
+                //alert(rdf);
+                $("#rdf").val(rdf);
+            }
+
+            function makeStartTag(el) {
+                var about = $(el).attr("about") ? $(el).attr("about") : $(el).find("[rel]").val() ;
+                return '<' + $(el).attr("typeof")  + (about?(' rdf:ID="'+about+'"'):(' rdf:about=""'))  + '>\n';
+            }
+
+            function makeEndTag(el) {
+                return '</' + $(el).attr("typeof") + '>\n';
+            }
+
+
+            function makeTag(el) {
+                var prop   = $(el).attr("property");
+                var type   = $(el).attr("typeof");
+                var about  = $(el).attr("about");
+                var rel    = $(el).attr("rel");
+                var val    = $(el).val();
+                var cl     = $(el).attr("class");
+
+                var inner  = '';
+                if (cl && cl.indexOf(':') != -1) {
+                    inner = cl;
+                }
+
+                var href   = $(el).attr("href")?$(el).attr("href"):val;
+
+                if (!val && !href) return '';
+                if (rel)           return '    <' + rel  + ' rdf:resource="'+ href +'"' + '/>\n';
+                if (prop)          return '    <' + prop + ((inner)?' rdf:parseType="Resource"':'') + '>' + (inner?'<'+inner+'>':'') + val + (inner?'</'+inner+'>':'') + '</' + prop + '>' + '\n';
+                if (type)          return '    <' + type + ' rdf:ID="'+ about +'"' + '>' + '</' + type + '>' + '\n';
+
+            }
+
+            // -->
+        </script>
+
+
+
+
+    </head>
+
+<body>
+    <div id="wrap">
+        <div id="header">
+            <a href="index.php">Home</a> | <a href="http://foaf.me/index.php?webid=http://www.w3.org/People/Berners-Lee/card">Explore FOAFs</a> | <a href="about.php">About</a> | <a href="documentation.php">Documentation</a> | <a href="downloads.php">Downloads</a> | <a href="http://groups.google.com/group/foafme?lnk=srg&amp;hl=en&amp;ie=UTF-8&amp;oe=utf-8">Mailing List</a>
+
+                        <span id="user">
+                <a id="account" href="https://foafssl.org/srv/idp?authreqissuer=http://foafbuilder.com/index.php">
+                    Login to your <strong>account</strong>
+                </a>
+                <br />
+            </span>
+            
+        </div>
+
+
+        <div id="content">
+
+            <h1>
+                <img alt="foaf" src="images/foaf.gif" />
+                <strong>FOAF</strong>
+            </h1>
+
+            <h2></h2>
+
+
+
+
+
+            <!-- personal profile document -->
+            <div style="display:none" typeof="foaf:PersonalProfileDocument" about="">
+                <span rel="foaf:maker" href="#me"></span>
+                <span rel="foaf:primaryTopic" href="#me"></span>
+            </div>
+
+            <!-- start tabs container -->
+            <div id="container" typeof="foaf:Person" about="me">
+                <ul>
+                    <li style="list-style-image: none"><a href="#me"><span>Me</span></a></li>
+                    <li style="list-style-image: none"><a href="#friends"><span>Friends</span></a></li>
+                    <li style="list-style-image: none"><a href="#accounts"><span>Accounts</span></a></li>
+                    <li style="list-style-image: none"><a href="#security"><span>Security</span></a></li>
+                                        <li style="list-style-image: none"><a href="#activity"><span>Activity</span></a></li>
+                                                        </ul>
+
+                <!-- start me tab -->
+                <div id="me" class="inputArea">
+                    <script type='text/javascript' src='http://foaf-visualizer.org/embed/widget/?uri=http://bblfish.net/people/henry/card#me' ></script>            <script type='text/javascript'>
+            $("a").each( function() {
+               this.href = this.href.replace(/foaf-visualizer.org..uri=/g,"foaf.me/index.php?webid=");
+            });
+            </script>
+        <h2>Other Visualisations</h2><a target='_blank' href='http://www.foafer.org/?file=http://bblfish.net/people/henry/card#me'>Foafer</a><br/><a target='_blank' href='http://foaf.qdos.com/find/?q=http://bblfish.net/people/henry/card#me'>Qdos</a><br/><a target='_blank' href='http://www5.wiwiss.fu-berlin.de/marbles?uri=http%3A%2F%2Fbblfish.net%2Fpeople%2Fhenry%2Fcard%23me'>Marbles</a><br/><a target='_blank' href='http://sig.ma/search?q=http%3A%2F%2Fbblfish.net%2Fpeople%2Fhenry%2Fcard%23me'>Sig.ma</a><br/><br/><a target='_blank' href='http://linkeddata.uriburner.com/ode/?uri=http://bblfish.net/people/henry/card#me'>OpenLink Data Explorer</a><br/><a target='_blank' href='http://xml.mfd-consult.dk/foaf/explorer/?foaf=http://bblfish.net/people/henry/card#me'>Foaf Explorer</a><br/><a target='_blank' href='http://dataviewer.zitgist.com/?uri=http://bblfish.net/people/henry/card#me'>Zitgist</a><br/><a target='_blank' href='http://foafmap.net/?foaf=http://bblfish.net/people/henry/card#me'>Foaf MAP</a><br/>
+                </div>
+                <!-- end me tab -->
+
+
+                <!-- start friends tab -->
+                <div id="friends" class="inputArea">
+                    
+
+                <script type="text/javascript">
+                    // TODO: make this more generic
+                    function sparul() {
+                        $("span[property]").editInPlace({ url: 'sparul.php' , params: 'uri=http://bblfish.net/people/henry/card#me' });
+                        $("span[rel]").editInPlace({ url: 'sparul.php' , params: 'uri=http://bblfish.net/people/henry/card#me' });
+                    }
+
+
+                    <!--
+                    // function to add a friend
+                    function addf(el) {
+
+                        // empty list
+                        // clone it
+                        // replace numbers
+                        // make sure fields are blank
+                        if ($(el).prevAll().find("tr:last input").attr("type") === 'text' ) {
+
+                            var about = $(el).prevAll().find(" tr:last").attr("about");
+                            var lastFriend = (about != undefined) ? about.replace(/[^0-9]*/, "") : -1;
+
+                            lastFriend++;
+                            var clone = $("#friendstable tr:last").clone();
+
+                            clone.attr({about : 'friend' + lastFriend });
+                            clone.appendTo("#friendstable");
+
+                            return;
+                        }
+
+                        // edit in place
+                        var last = $("#friendstable tr:last");
+                        if (last == null) {
+                        } else {
+                            var about = $("#friendstable tr:last").attr("about");
+                            var lastFriend = about != undefined? about.replace(/.*friend/, "") : -1;
+                            lastFriend++;
+                            //alert (lastFriend)
+                            $("#friendstable tr:last").after("<tr about='#friend"+lastFriend+"' typeof='foaf:Person' ><td>Friend</td><td><span property='foaf:name'></span></td><td><a rel='refs:seeAlso'></a></td><td about='http://bblfish.net/people/henry/card#me' rel='foaf:knows' href='#friend"+lastFriend+"' ><a>x</a></td></tr>");
+
+                            sparul();
+                        }
+
+
+                    }
+                    // -->
+                </script>
+
+                <h2>Friends</h2>
+                <table id="friendstable" about="http://bblfish.net/people/henry/card#me">
+                                        <tr>
+                        <td></td>
+                        <td>Name</td><td>URL</td>
+                    </tr>
+                    
+                    
+
+                        
+                    <tr typeof="foaf:Person" id="friend0" about="http://www.ifi.uzh.ch/ddis/fileadmin/user_upload/avi/#me" >
+                        <td><a href="?webid=http://www.ifi.uzh.ch/ddis/fileadmin/user_upload/avi/#me">View</a>: </td>
+                        <td><span property="foaf:name">Abraham Bernstein</span></td>
+                        <td><span href="http://www.ifi.uzh.ch/ddis/fileadmin/user_upload/avi/#me" rel="rdfs:seeAlso" >http://www.ifi.uzh.ch/ddis/fileadmin/user_upload/avi/#me</span></td>
+                        <td about="http://bblfish.net/people/henry/card#me" rel="foaf:knows" href="#friend0">
+                                                    </td>
+                    </tr>
+                        
+
+                    
+
+                        
+                    <tr typeof="foaf:Person" id="friend1" about="http://foaf.me/ah1#me" >
+                        <td><a href="?webid=http://foaf.me/ah1#me">View</a>: </td>
+                        <td><span property="foaf:name">Akbar Hossain</span></td>
+                        <td><span href="http://foaf.me/ah1#me" rel="rdfs:seeAlso" >http://foaf.me/ah1#me</span></td>
+                        <td about="http://bblfish.net/people/henry/card#me" rel="foaf:knows" href="#friend1">
+                                                    </td>
+                    </tr>
+                        
+
+                    
+
+                        
+                    <tr typeof="foaf:Person" id="friend2" about="http://www.semantic-web.at/people/blumauer/card#me" >
+                        <td><a href="?webid=http://www.semantic-web.at/people/blumauer/card#me">View</a>: </td>
+                        <td><span property="foaf:name">Andreas Blumauer</span></td>
+                        <td><span href="http://www.semantic-web.at/people/blumauer/card#me" rel="rdfs:seeAlso" >http://www.semantic-web.at/people/blumauer/card#me</span></td>
+                        <td about="http://bblfish.net/people/henry/card#me" rel="foaf:knows" href="#friend2">
+                                                    </td>
+                    </tr>
+                        
+
+                    
+
+                        
+                    <tr typeof="foaf:Person" id="friend3" about="http://www.anjeve.de/foaf.rdf#AnjaJentzsch" >
+                        <td><a href="?webid=http://www.anjeve.de/foaf.rdf#AnjaJentzsch">View</a>: </td>
+                        <td><span property="foaf:name">Anja Jentzsch</span></td>
+                        <td><span href="http://www.anjeve.de/foaf.rdf#AnjaJentzsch" rel="rdfs:seeAlso" >http://www.anjeve.de/foaf.rdf#AnjaJentzsch</span></td>
+                        <td about="http://bblfish.net/people/henry/card#me" rel="foaf:knows" href="#friend3">
+                                                    </td>
+                    </tr>
+                        
+
+                    
+
+                        
+                    <tr typeof="foaf:Person" id="friend4" about="http://www.fosi.org/people/philarcher/foaf.rdf#me" >
+                        <td><a href="?webid=http://www.fosi.org/people/philarcher/foaf.rdf#me">View</a>: </td>
+                        <td><span property="foaf:name">Archer Phil</span></td>
+                        <td><span href="http://www.fosi.org/people/philarcher/foaf.rdf#me" rel="rdfs:seeAlso" >http://www.fosi.org/people/philarcher/foaf.rdf#me</span></td>
+                        <td about="http://bblfish.net/people/henry/card#me" rel="foaf:knows" href="#friend4">
+                                                    </td>
+                    </tr>
+                        
+
+                    
+
+                        
+                    <tr typeof="foaf:Person" id="friend5" about="friend5" >
+                        <td><a href="?webid=http://www.openrdf.org/people/foaf-arjohn.rdf">View</a>: </td>
+                        <td><span property="foaf:name">Arjohn Kampman</span></td>
+                        <td><span href="http://www.openrdf.org/people/foaf-arjohn.rdf" rel="rdfs:seeAlso" >http://www.openrdf.org/people/foaf-arjohn.rdf</span></td>
+                        <td about="http://bblfish.net/people/henry/card#me" rel="foaf:knows" href="#friend5">
+                                                    </td>
+                    </tr>
+                        
+
+                    
+
+                        
+                    <tr typeof="foaf:Person" id="friend6" about="http://handtwerk.de/foaf.rdf#arne" >
+                        <td><a href="?webid=http://handtwerk.de/foaf.rdf#arne">View</a>: </td>
+                        <td><span property="foaf:name">Arne Handt</span></td>
+                        <td><span href="http://handtwerk.de/foaf.rdf#arne" rel="rdfs:seeAlso" >http://handtwerk.de/foaf.rdf#arne</span></td>
+                        <td about="http://bblfish.net/people/henry/card#me" rel="foaf:knows" href="#friend6">
+                                                    </td>
+                    </tr>
+                        
+
+                    
+
+                        
+                    <tr typeof="foaf:Person" id="friend7" about="http://axel.deri.ie/~axepol/foaf.rdf#me" >
+                        <td><a href="?webid=http://axel.deri.ie/~axepol/foaf.rdf#me">View</a>: </td>
+                        <td><span property="foaf:name">Axel Polleres</span></td>
+                        <td><span href="http://axel.deri.ie/~axepol/foaf.rdf#me" rel="rdfs:seeAlso" >http://axel.deri.ie/~axepol/foaf.rdf#me</span></td>
+                        <td about="http://bblfish.net/people/henry/card#me" rel="foaf:knows" href="#friend7">
+                                                    </td>
+                    </tr>
+                        
+
+                    
+
+                        
+                    <tr typeof="foaf:Person" id="friend8" about="friend8" >
+                        <td><a href="?webid=http://www.pst.ifi.lmu.de/people/staff/rauschmayer/axel-rauschmayer/">View</a>: </td>
+                        <td><span property="foaf:name">Axel Rauschmayer</span></td>
+                        <td><span href="http://www.pst.ifi.lmu.de/people/staff/rauschmayer/axel-rauschmayer/" rel="rdfs:seeAlso" >http://www.pst.ifi.lmu.de/people/staff/rauschmayer/axel-rauschmayer/</span></td>
+                        <td about="http://bblfish.net/people/henry/card#me" rel="foaf:knows" href="#friend8">
+                                                    </td>
+                    </tr>
+                        
+
+                    
+
+                        
+                    <tr typeof="foaf:Person" id="friend9" about="http://foafbuilder.qdos.com/people/asyd.myopenid.com/foaf.rdf#me" >
+                        <td><a href="?webid=http://foafbuilder.qdos.com/people/asyd.myopenid.com/foaf.rdf#me">View</a>: </td>
+                        <td><span property="foaf:name">Bruno Bonfils</span></td>
+                        <td><span href="http://foafbuilder.qdos.com/people/asyd.myopenid.com/foaf.rdf#me" rel="rdfs:seeAlso" >http://foafbuilder.qdos.com/people/asyd.myopenid.com/foaf.rdf#me</span></td>
+                        <td about="http://bblfish.net/people/henry/card#me" rel="foaf:knows" href="#friend9">
+                                                    </td>
+                    </tr>
+                        
+
+                    
+
+                        
+                    <tr typeof="foaf:Person" id="friend10" about="friend10" >
+                        <td><a href="?webid=http://catbauer.com/">View</a>: </td>
+                        <td><span property="foaf:name">Cat Bauer</span></td>
+                        <td><span href="http://catbauer.com/" rel="rdfs:seeAlso" >http://catbauer.com/</span></td>
+                        <td about="http://bblfish.net/people/henry/card#me" rel="foaf:knows" href="#friend10">
+                                                    </td>
+                    </tr>
+                        
+
+                    
+
+                        
+                    <tr typeof="foaf:Person" id="friend11" about="http://metacognition.info/profile/webwho.xrdf#chime" >
+                        <td><a href="?webid=http://metacognition.info/profile/webwho.xrdf#chime">View</a>: </td>
+                        <td><span property="foaf:name">Chimezie Ogbuji</span></td>
+                        <td><span href="http://metacognition.info/profile/webwho.xrdf#chime" rel="rdfs:seeAlso" >http://metacognition.info/profile/webwho.xrdf#chime</span></td>
+                        <td about="http://bblfish.net/people/henry/card#me" rel="foaf:knows" href="#friend11">
+                                                    </td>
+                    </tr>
+                        
+
+                    
+
+                        
+                    <tr typeof="foaf:Person" id="friend12" about="http://dblp.l3s.de/d2r/page/authors/Christian_Bizer" >
+                        <td><a href="?webid=http://dblp.l3s.de/d2r/page/authors/Christian_Bizer">View</a>: </td>
+                        <td><span property="foaf:name">Chris Bizer</span></td>
+                        <td><span href="http://dblp.l3s.de/d2r/page/authors/Christian_Bizer" rel="rdfs:seeAlso" >http://dblp.l3s.de/d2r/page/authors/Christian_Bizer</span></td>
+                        <td about="http://bblfish.net/people/henry/card#me" rel="foaf:knows" href="#friend12">
+                                                    </td>
+                    </tr>
+                        
+
+                    
+
+                        
+                    <tr typeof="foaf:Person" id="friend13" about="http://semedia.deit.univpm.it/people/christian/foaf.rdf#me" >
+                        <td><a href="?webid=http://semedia.deit.univpm.it/people/christian/foaf.rdf#me">View</a>: </td>
+                        <td><span property="foaf:name">Christian Morbidoni</span></td>
+                        <td><span href="http://semedia.deit.univpm.it/people/christian/foaf.rdf#me" rel="rdfs:seeAlso" >http://semedia.deit.univpm.it/people/christian/foaf.rdf#me</span></td>
+                        <td about="http://bblfish.net/people/henry/card#me" rel="foaf:knows" href="#friend13">
+                                                    </td>
+                    </tr>
+                        
+
+                    
+
+                        
+                    <tr typeof="foaf:Person" id="friend14" about="http://b4mad.net/FOAF/goern.rdf#goern" >
+                        <td><a href="?webid=http://b4mad.net/FOAF/goern.rdf#goern">View</a>: </td>
+                        <td><span property="foaf:name">Christoph  Görn</span></td>
+                        <td><span href="http://b4mad.net/FOAF/goern.rdf#goern" rel="rdfs:seeAlso" >http://b4mad.net/FOAF/goern.rdf#goern</span></td>
+                        <td about="http://bblfish.net/people/henry/card#me" rel="foaf:knows" href="#friend14">
+                                                    </td>
+                    </tr>
+                        
+
+                    
+
+                        
+                    <tr typeof="foaf:Person" id="friend15" about="http://www.ifi.unizh.ch/ddis/fileadmin/user_upload/kiefer/foaf.rdf#christophkiefer" >
+                        <td><a href="?webid=http://www.ifi.unizh.ch/ddis/fileadmin/user_upload/kiefer/foaf.rdf#christophkiefer">View</a>: </td>
+                        <td><span property="foaf:name">Christoph Kiefer</span></td>
+                        <td><span href="http://www.ifi.unizh.ch/ddis/fileadmin/user_upload/kiefer/foaf.rdf#christophkiefer" rel="rdfs:seeAlso" >http://www.ifi.unizh.ch/ddis/fileadmin/user_upload/kiefer/foaf.rdf#christophkiefer</span></td>
+                        <td about="http://bblfish.net/people/henry/card#me" rel="foaf:knows" href="#friend15">
+                                                    </td>
+                    </tr>
+                        
+
+                    
+
+                        
+                    <tr typeof="foaf:Person" id="friend16" about="http://crschmidt.net/foaf.rdf#crschmidt" >
+                        <td><a href="?webid=http://crschmidt.net/foaf.rdf#crschmidt">View</a>: </td>
+                        <td><span property="foaf:name">Christopher Schmidt</span></td>
+                        <td><span href="http://crschmidt.net/foaf.rdf#crschmidt" rel="rdfs:seeAlso" >http://crschmidt.net/foaf.rdf#crschmidt</span></td>
+                        <td about="http://bblfish.net/people/henry/card#me" rel="foaf:knows" href="#friend16">
+                                                    </td>
+                    </tr>
+                        
+
+                    
+
+                        
+                    <tr typeof="foaf:Person" id="friend17" about="http://danbri.org/foaf.rdf#danbri" >
+                        <td><a href="?webid=http://danbri.org/foaf.rdf#danbri">View</a>: </td>
+                        <td><span property="foaf:name">Dan Brickley</span></td>
+                        <td><span href="http://danbri.org/foaf.rdf#danbri" rel="rdfs:seeAlso" >http://danbri.org/foaf.rdf#danbri</span></td>
+                        <td about="http://bblfish.net/people/henry/card#me" rel="foaf:knows" href="#friend17">
+                                                    </td>
+                    </tr>
+                        
+
+                    
+
+                        
+                    <tr typeof="foaf:Person" id="friend18" about="http://www.w3.org/People/Connolly/#me" >
+                        <td><a href="?webid=http://www.w3.org/People/Connolly/#me">View</a>: </td>
+                        <td><span property="foaf:name">Dan Connolly</span></td>
+                        <td><span href="http://www.w3.org/People/Connolly/#me" rel="rdfs:seeAlso" >http://www.w3.org/People/Connolly/#me</span></td>
+                        <td about="http://bblfish.net/people/henry/card#me" rel="foaf:knows" href="#friend18">
+                                                    </td>
+                    </tr>
+                        
+
+                    
+
+                        
+                    <tr typeof="foaf:Person" id="friend19" about="http://foaf.me/dana#me" >
+                        <td><a href="?webid=http://foaf.me/dana#me">View</a>: </td>
+                        <td><span property="foaf:name">Danica Radovanovic</span></td>
+                        <td><span href="http://foaf.me/dana#me" rel="rdfs:seeAlso" >http://foaf.me/dana#me</span></td>
+                        <td about="http://bblfish.net/people/henry/card#me" rel="foaf:knows" href="#friend19">
+                                                    </td>
+                    </tr>
+                        
+
+                    
+
+                        
+                    <tr typeof="foaf:Person" id="friend20" about="http://danny.ayers.name/index.rdf#me" >
+                        <td><a href="?webid=http://danny.ayers.name/index.rdf#me">View</a>: </td>
+                        <td><span property="foaf:name">Danny Ayers</span></td>
+                        <td><span href="http://danny.ayers.name/index.rdf#me" rel="rdfs:seeAlso" >http://danny.ayers.name/index.rdf#me</span></td>
+                        <td about="http://bblfish.net/people/henry/card#me" rel="foaf:knows" href="#friend20">
+                                                    </td>
+                    </tr>
+                        
+
+                    
+
+                        
+                    <tr typeof="foaf:Person" id="friend21" about="http://davelevy.info/foaf.rdf#me" >
+                        <td><a href="?webid=http://davelevy.info/foaf.rdf#me">View</a>: </td>
+                        <td><span property="foaf:name">Dave Levy</span></td>
+                        <td><span href="http://davelevy.info/foaf.rdf#me" rel="rdfs:seeAlso" >http://davelevy.info/foaf.rdf#me</span></td>
+                        <td about="http://bblfish.net/people/henry/card#me" rel="foaf:knows" href="#friend21">
+                                                    </td>
+                    </tr>
+                        
+
+                    
+
+                        
+                    <tr typeof="foaf:Person" id="friend22" about="http://data.boab.info/david/foaf.rdf#me" >
+                        <td><a href="?webid=http://data.boab.info/david/foaf.rdf#me">View</a>: </td>
+                        <td><span property="foaf:name">David Peterson</span></td>
+                        <td><span href="http://data.boab.info/david/foaf.rdf#me" rel="rdfs:seeAlso" >http://data.boab.info/david/foaf.rdf#me</span></td>
+                        <td about="http://bblfish.net/people/henry/card#me" rel="foaf:knows" href="#friend22">
+                                                    </td>
+                    </tr>
+                        
+
+                    
+
+                        
+                    <tr typeof="foaf:Person" id="friend23" about="http://www.topquadrant.com/people/dallemang/foaf.rdf#me" >
+                        <td><a href="?webid=http://www.topquadrant.com/people/dallemang/foaf.rdf#me">View</a>: </td>
+                        <td><span property="foaf:name">Dean Allemang</span></td>
+                        <td><span href="http://www.topquadrant.com/people/dallemang/foaf.rdf#me" rel="rdfs:seeAlso" >http://www.topquadrant.com/people/dallemang/foaf.rdf#me</span></td>
+                        <td about="http://bblfish.net/people/henry/card#me" rel="foaf:knows" href="#friend23">
+                                                    </td>
+                    </tr>
+                        
+
+                    
+
+                        
+                    <tr typeof="foaf:Person" id="friend24" about="http://bigasterisk.com/foaf.rdf#drewp" >
+                        <td><a href="?webid=http://bigasterisk.com/foaf.rdf#drewp">View</a>: </td>
+                        <td><span property="foaf:name">Drew Perttula</span></td>
+                        <td><span href="http://bigasterisk.com/foaf.rdf#drewp" rel="rdfs:seeAlso" >http://bigasterisk.com/foaf.rdf#drewp</span></td>
+                        <td about="http://bblfish.net/people/henry/card#me" rel="foaf:knows" href="#friend24">
+                                                    </td>
+                    </tr>
+                        
+
+                    
+
+                        
+                    <tr typeof="foaf:Person" id="friend25" about="http://heddley.com/edd/foaf.rdf#edd" >
+                        <td><a href="?webid=http://heddley.com/edd/foaf.rdf#edd">View</a>: </td>
+                        <td><span property="foaf:name">Edd Dumbill</span></td>
+                        <td><span href="http://heddley.com/edd/foaf.rdf#edd" rel="rdfs:seeAlso" >http://heddley.com/edd/foaf.rdf#edd</span></td>
+                        <td about="http://bblfish.net/people/henry/card#me" rel="foaf:knows" href="#friend25">
+                                                    </td>
+                    </tr>
+                        
+
+                    
+
+                        
+                    <tr typeof="foaf:Person" id="friend26" about="http://torrez.us/who#elias" >
+                        <td><a href="?webid=http://torrez.us/who#elias">View</a>: </td>
+                        <td><span property="foaf:name">Elias Torres</span></td>
+                        <td><span href="http://torrez.us/who#elias" rel="rdfs:seeAlso" >http://torrez.us/who#elias</span></td>
+                        <td about="http://bblfish.net/people/henry/card#me" rel="foaf:knows" href="#friend26">
+                                                    </td>
+                    </tr>
+                        
+
+                    
+
+                        
+                    <tr typeof="foaf:Person" id="friend27" about="friend27" >
+                        <td><a href="?webid=http://www.w3.org/People/Eric/ericP-foaf.rdf">View</a>: </td>
+                        <td><span property="foaf:name">Eric Prud'hommeaux</span></td>
+                        <td><span href="http://www.w3.org/People/Eric/ericP-foaf.rdf" rel="rdfs:seeAlso" >http://www.w3.org/People/Eric/ericP-foaf.rdf</span></td>
+                        <td about="http://bblfish.net/people/henry/card#me" rel="foaf:knows" href="#friend27">
+                                                    </td>
+                    </tr>
+                        
+
+                    
+
+                        
+                    <tr typeof="foaf:Person" id="friend28" about="friend28" >
+                        <td><a href="?webid=http://g1o.net/">View</a>: </td>
+                        <td><span property="foaf:name">Giovanni Tummarello</span></td>
+                        <td><span href="http://g1o.net/" rel="rdfs:seeAlso" >http://g1o.net/</span></td>
+                        <td about="http://bblfish.net/people/henry/card#me" rel="foaf:knows" href="#friend28">
+                                                    </td>
+                    </tr>
+                        
+
+                    
+
+                        
+                    <tr typeof="foaf:Person" id="friend29" about="http://www.dfki.uni-kl.de/~grimnes/foaf.rdf#ggrimnes" >
+                        <td><a href="?webid=http://www.dfki.uni-kl.de/~grimnes/foaf.rdf#ggrimnes">View</a>: </td>
+                        <td><span property="foaf:name">Gunnar AAstrand Grimnes</span></td>
+                        <td><span href="http://www.dfki.uni-kl.de/~grimnes/foaf.rdf#ggrimnes" rel="rdfs:seeAlso" >http://www.dfki.uni-kl.de/~grimnes/foaf.rdf#ggrimnes</span></td>
+                        <td about="http://bblfish.net/people/henry/card#me" rel="foaf:knows" href="#friend29">
+                                                    </td>
+                    </tr>
+                        
+
+                    
+
+                        
+                    <tr typeof="foaf:Person" id="friend30" about="http://www.ibiblio.org/hhalpin/foaf.rdf#me" >
+                        <td><a href="?webid=http://www.ibiblio.org/hhalpin/foaf.rdf#me">View</a>: </td>
+                        <td><span property="foaf:name">Halpin Harry</span></td>
+                        <td><span href="http://www.ibiblio.org/hhalpin/foaf.rdf#me" rel="rdfs:seeAlso" >http://www.ibiblio.org/hhalpin/foaf.rdf#me</span></td>
+                        <td about="http://bblfish.net/people/henry/card#me" rel="foaf:knows" href="#friend30">
+                                                    </td>
+                    </tr>
+                        
+
+                    
+
+                        
+                    <tr typeof="foaf:Person" id="friend31" about="http://dbpedia.org/resource/James_Gosling" >
+                        <td><a href="?webid=http://dbpedia.org/resource/James_Gosling">View</a>: </td>
+                        <td><span property="foaf:name">James Gosling</span></td>
+                        <td><span href="http://dbpedia.org/resource/James_Gosling" rel="rdfs:seeAlso" >http://dbpedia.org/resource/James_Gosling</span></td>
+                        <td about="http://bblfish.net/people/henry/card#me" rel="foaf:knows" href="#friend31">
+                                                    </td>
+                    </tr>
+                        
+
+                    
+
+                        
+                    <tr typeof="foaf:Person" id="friend32" about="friend32" >
+                        <td><a href="?webid=http://www.openrdf.org/people/foaf-jeen.rdf">View</a>: </td>
+                        <td><span property="foaf:name">Jeen Broekstra</span></td>
+                        <td><span href="http://www.openrdf.org/people/foaf-jeen.rdf" rel="rdfs:seeAlso" >http://www.openrdf.org/people/foaf-jeen.rdf</span></td>
+                        <td about="http://bblfish.net/people/henry/card#me" rel="foaf:knows" href="#friend32">
+                                                    </td>
+                    </tr>
+                        
+
+                    
+
+                        
+                    <tr typeof="foaf:Person" id="friend33" about="friend33" >
+                        <td><a href="?webid=http://www.j-paine.org/">View</a>: </td>
+                        <td><span property="foaf:name">Jocelyn Paine</span></td>
+                        <td><span href="http://www.j-paine.org/" rel="rdfs:seeAlso" >http://www.j-paine.org/</span></td>
+                        <td about="http://bblfish.net/people/henry/card#me" rel="foaf:knows" href="#friend33">
+                                                    </td>
+                    </tr>
+                        
+
+                    
+
+                        
+                    <tr typeof="foaf:Person" id="friend34" about="friend34" >
+                        <td><a href="?webid=http://bitworking.org/">View</a>: </td>
+                        <td><span property="foaf:name">Joe Gregorio</span></td>
+                        <td><span href="http://bitworking.org/" rel="rdfs:seeAlso" >http://bitworking.org/</span></td>
+                        <td about="http://bblfish.net/people/henry/card#me" rel="foaf:knows" href="#friend34">
+                                                    </td>
+                    </tr>
+                        
+
+                    
+
+                        
+                    <tr typeof="foaf:Person" id="friend35" about="http://kashori.com/JohnBlack/foaf.rdf#jpb" >
+                        <td><a href="?webid=http://kashori.com/JohnBlack/foaf.rdf#jpb">View</a>: </td>
+                        <td><span property="foaf:name">John Black</span></td>
+                        <td><span href="http://kashori.com/JohnBlack/foaf.rdf#jpb" rel="rdfs:seeAlso" >http://kashori.com/JohnBlack/foaf.rdf#jpb</span></td>
+                        <td about="http://bblfish.net/people/henry/card#me" rel="foaf:knows" href="#friend35">
+                                                    </td>
+                    </tr>
+                        
+
+                    
+
+                        
+                    <tr typeof="foaf:Person" id="friend36" about="friend36" >
+                        <td><a href="?webid=">View</a>: </td>
+                        <td><span property="foaf:name">Karin Rafael Remeikis</span></td>
+                        <td><span href="" rel="rdfs:seeAlso" >N/A</span></td>
+                        <td about="http://bblfish.net/people/henry/card#me" rel="foaf:knows" href="#friend36">
+                                                    </td>
+                    </tr>
+                        
+
+                    
+
+                        
+                    <tr typeof="foaf:Person" id="friend37" about="http://kingsley.idehen.name/dataspace/person/kidehen#this" >
+                        <td><a href="?webid=http://kingsley.idehen.name/dataspace/person/kidehen#this">View</a>: </td>
+                        <td><span property="foaf:name">Kingsley Idehen</span></td>
+                        <td><span href="http://kingsley.idehen.name/dataspace/person/kidehen#this" rel="rdfs:seeAlso" >http://kingsley.idehen.name/dataspace/person/kidehen#this</span></td>
+                        <td about="http://bblfish.net/people/henry/card#me" rel="foaf:knows" href="#friend37">
+                                                    </td>
+                    </tr>
+                        
+
+                    
+
+                        
+                    <tr typeof="foaf:Person" id="friend38" about="http://swordfish.rdfweb.org/people/libby/rdfweb/webwho.xrdf#me" >
+                        <td><a href="?webid=http://swordfish.rdfweb.org/people/libby/rdfweb/webwho.xrdf#me">View</a>: </td>
+                        <td><span property="foaf:name">Libby Miller</span></td>
+                        <td><span href="http://swordfish.rdfweb.org/people/libby/rdfweb/webwho.xrdf#me" rel="rdfs:seeAlso" >http://swordfish.rdfweb.org/people/libby/rdfweb/webwho.xrdf#me</span></td>
+                        <td about="http://bblfish.net/people/henry/card#me" rel="foaf:knows" href="#friend38">
+                                                    </td>
+                    </tr>
+                        
+
+                    
+
+                        
+                    <tr typeof="foaf:Person" id="friend39" about="http://www.discoveringidentity.com/foaf.rdf#me" >
+                        <td><a href="?webid=http://www.discoveringidentity.com/foaf.rdf#me">View</a>: </td>
+                        <td><span property="foaf:name">Mark Dixon</span></td>
+                        <td><span href="http://www.discoveringidentity.com/foaf.rdf#me" rel="rdfs:seeAlso" >http://www.discoveringidentity.com/foaf.rdf#me</span></td>
+                        <td about="http://bblfish.net/people/henry/card#me" rel="foaf:knows" href="#friend39">
+                                                    </td>
+                    </tr>
+                        
+
+                    
+
+                        
+                    <tr typeof="foaf:Person" id="friend40" about="http://www.aifb.uni-karlsruhe.de/Personen/viewPersonOWL/id2076instance" >
+                        <td><a href="?webid=http://www.aifb.uni-karlsruhe.de/Personen/viewPersonOWL/id2076instance">View</a>: </td>
+                        <td><span property="foaf:name">Max Völkel</span></td>
+                        <td><span href="http://www.aifb.uni-karlsruhe.de/Personen/viewPersonOWL/id2076instance" rel="rdfs:seeAlso" >http://www.aifb.uni-karlsruhe.de/Personen/viewPersonOWL/id2076instance</span></td>
+                        <td about="http://bblfish.net/people/henry/card#me" rel="foaf:knows" href="#friend40">
+                                                    </td>
+                    </tr>
+                        
+
+                    
+
+                        
+                    <tr typeof="foaf:Person" id="friend41" about="http://foaf.me/melvincarvalho#me" >
+                        <td><a href="?webid=http://foaf.me/melvincarvalho#me">View</a>: </td>
+                        <td><span property="foaf:name">Melvin Carvalho</span></td>
+                        <td><span href="http://foaf.me/melvincarvalho#me" rel="rdfs:seeAlso" >http://foaf.me/melvincarvalho#me</span></td>
+                        <td about="http://bblfish.net/people/henry/card#me" rel="foaf:knows" href="#friend41">
+                                                    </td>
+                    </tr>
+                        
+
+                    
+
+                        
+                    <tr typeof="foaf:Person" id="friend42" about="http://www.sw-app.org/foaf/mic.rdf#mic" >
+                        <td><a href="?webid=http://www.sw-app.org/foaf/mic.rdf#mic">View</a>: </td>
+                        <td><span property="foaf:name">Michael G. Hausenblas</span></td>
+                        <td><span href="http://www.sw-app.org/foaf/mic.rdf#mic" rel="rdfs:seeAlso" >http://www.sw-app.org/foaf/mic.rdf#mic</span></td>
+                        <td about="http://bblfish.net/people/henry/card#me" rel="foaf:knows" href="#friend42">
+                                                    </td>
+                    </tr>
+                        
+
+                    
+
+                        
+                    <tr typeof="foaf:Person" id="friend43" about="friend43" >
+                        <td><a href="?webid=http://niij.org/">View</a>: </td>
+                        <td><span property="foaf:name">Michael Zeltner</span></td>
+                        <td><span href="http://niij.org/" rel="rdfs:seeAlso" >http://niij.org/</span></td>
+                        <td about="http://bblfish.net/people/henry/card#me" rel="foaf:knows" href="#friend43">
+                                                    </td>
+                    </tr>
+                        
+
+                    
+
+                        
+                    <tr typeof="foaf:Person" id="friend44" about="http://mmt.me.uk/foaf.rdf#mischa" >
+                        <td><a href="?webid=http://mmt.me.uk/foaf.rdf#mischa">View</a>: </td>
+                        <td><span property="foaf:name">Mischa Tuffield</span></td>
+                        <td><span href="http://mmt.me.uk/foaf.rdf#mischa" rel="rdfs:seeAlso" >http://mmt.me.uk/foaf.rdf#mischa</span></td>
+                        <td about="http://bblfish.net/people/henry/card#me" rel="foaf:knows" href="#friend44">
+                                                    </td>
+                    </tr>
+                        
+
+                    
+
+                        
+                    <tr typeof="foaf:Person" id="friend45" about="http://purl.oclc.org/NET/gearon/people/PaulGearon/foaf.rdf#me" >
+                        <td><a href="?webid=http://purl.oclc.org/NET/gearon/people/PaulGearon/foaf.rdf#me">View</a>: </td>
+                        <td><span property="foaf:name">Paul Gearon</span></td>
+                        <td><span href="http://purl.oclc.org/NET/gearon/people/PaulGearon/foaf.rdf#me" rel="rdfs:seeAlso" >http://purl.oclc.org/NET/gearon/people/PaulGearon/foaf.rdf#me</span></td>
+                        <td about="http://bblfish.net/people/henry/card#me" rel="foaf:knows" href="#friend45">
+                                                    </td>
+                    </tr>
+                        
+
+                    
+
+                        
+                    <tr typeof="foaf:Person" id="friend46" about="friend46" >
+                        <td><a href="?webid=http://kronkltd.net/data/foaf.rdf">View</a>: </td>
+                        <td><span property="foaf:name">Renfer Daniel</span></td>
+                        <td><span href="http://kronkltd.net/data/foaf.rdf" rel="rdfs:seeAlso" >http://kronkltd.net/data/foaf.rdf</span></td>
+                        <td about="http://bblfish.net/people/henry/card#me" rel="foaf:knows" href="#friend46">
+                                                    </td>
+                    </tr>
+                        
+
+                    
+
+                        
+                    <tr typeof="foaf:Person" id="friend47" about="http://richard.cyganiak.de/foaf.rdf#cygri" >
+                        <td><a href="?webid=http://richard.cyganiak.de/foaf.rdf#cygri">View</a>: </td>
+                        <td><span property="foaf:name">Richard Cyganiak</span></td>
+                        <td><span href="http://richard.cyganiak.de/foaf.rdf#cygri" rel="rdfs:seeAlso" >http://richard.cyganiak.de/foaf.rdf#cygri</span></td>
+                        <td about="http://bblfish.net/people/henry/card#me" rel="foaf:knows" href="#friend47">
+                                                    </td>
+                    </tr>
+                        
+
+                    
+
+                        
+                    <tr typeof="foaf:Person" id="friend48" about="http://dbpedia.org/resource/Roy_Fielding" >
+                        <td><a href="?webid=http://dbpedia.org/resource/Roy_Fielding">View</a>: </td>
+                        <td><span property="foaf:name">Roy Fielding</span></td>
+                        <td><span href="http://dbpedia.org/resource/Roy_Fielding" rel="rdfs:seeAlso" >http://dbpedia.org/resource/Roy_Fielding</span></td>
+                        <td about="http://bblfish.net/people/henry/card#me" rel="foaf:knows" href="#friend48">
+                                                    </td>
+                    </tr>
+                        
+
+                    
+
+                        
+                    <tr typeof="foaf:Person" id="friend49" about="http://sebastian.dietzold.de/terms/me" >
+                        <td><a href="?webid=http://sebastian.dietzold.de/terms/me">View</a>: </td>
+                        <td><span property="foaf:name">Sebastian Dietzold</span></td>
+                        <td><span href="http://sebastian.dietzold.de/terms/me" rel="rdfs:seeAlso" >http://sebastian.dietzold.de/terms/me</span></td>
+                        <td about="http://bblfish.net/people/henry/card#me" rel="foaf:knows" href="#friend49">
+                                                    </td>
+                    </tr>
+                        
+
+                    
+
+                        
+                    <tr typeof="foaf:Person" id="friend50" about="http://sebastian.tramp.name" >
+                        <td><a href="?webid=http://sebastian.tramp.name">View</a>: </td>
+                        <td><span property="foaf:name">Sebastian Tramp</span></td>
+                        <td><span href="http://sebastian.tramp.name" rel="rdfs:seeAlso" >http://sebastian.tramp.name</span></td>
+                        <td about="http://bblfish.net/people/henry/card#me" rel="foaf:knows" href="#friend50">
+                                                    </td>
+                    </tr>
+                        
+
+                    
+
+                        
+                    <tr typeof="foaf:Person" id="friend51" about="friend51" >
+                        <td><a href="?webid=http://www.webmink.net/foaf.rdf">View</a>: </td>
+                        <td><span property="foaf:name">Simon Phipps</span></td>
+                        <td><span href="http://www.webmink.net/foaf.rdf" rel="rdfs:seeAlso" >http://www.webmink.net/foaf.rdf</span></td>
+                        <td about="http://bblfish.net/people/henry/card#me" rel="foaf:knows" href="#friend51">
+                                                    </td>
+                    </tr>
+                        
+
+                    
+
+                        
+                    <tr typeof="foaf:Person" id="friend52" about="http://www.uni-koblenz.de/~sschenk/foaf.rdf#me" >
+                        <td><a href="?webid=http://www.uni-koblenz.de/~sschenk/foaf.rdf#me">View</a>: </td>
+                        <td><span property="foaf:name">Simon Schenk</span></td>
+                        <td><span href="http://www.uni-koblenz.de/~sschenk/foaf.rdf#me" rel="rdfs:seeAlso" >http://www.uni-koblenz.de/~sschenk/foaf.rdf#me</span></td>
+                        <td about="http://bblfish.net/people/henry/card#me" rel="foaf:knows" href="#friend52">
+                                                    </td>
+                    </tr>
+                        
+
+                    
+
+                        
+                    <tr typeof="foaf:Person" id="friend53" about="friend53" >
+                        <td><a href="?webid=http://novaspivack.typepad.com/foaf.rdf">View</a>: </td>
+                        <td><span property="foaf:name">Spivack Nova</span></td>
+                        <td><span href="http://novaspivack.typepad.com/foaf.rdf" rel="rdfs:seeAlso" >http://novaspivack.typepad.com/foaf.rdf</span></td>
+                        <td about="http://bblfish.net/people/henry/card#me" rel="foaf:knows" href="#friend53">
+                                                    </td>
+                    </tr>
+                        
+
+                    
+
+                        
+                    <tr typeof="foaf:Person" id="friend54" about="http://www.informatik.uni-leipzig.de/~auer/foaf.rdf#me" >
+                        <td><a href="?webid=http://www.informatik.uni-leipzig.de/~auer/foaf.rdf#me">View</a>: </td>
+                        <td><span property="foaf:name">Sören Auer</span></td>
+                        <td><span href="http://www.informatik.uni-leipzig.de/~auer/foaf.rdf#me" rel="rdfs:seeAlso" >http://www.informatik.uni-leipzig.de/~auer/foaf.rdf#me</span></td>
+                        <td about="http://bblfish.net/people/henry/card#me" rel="foaf:knows" href="#friend54">
+                                                    </td>
+                    </tr>
+                        
+
+                    
+
+                        
+                    <tr typeof="foaf:Person" id="friend55" about="http://www.w3.org/People/Berners-Lee/card#i" >
+                        <td><a href="?webid=http://www.w3.org/People/Berners-Lee/card#i">View</a>: </td>
+                        <td><span property="foaf:name">Tim Berners Lee</span></td>
+                        <td><span href="http://www.w3.org/People/Berners-Lee/card#i" rel="rdfs:seeAlso" >http://www.w3.org/People/Berners-Lee/card#i</span></td>
+                        <td about="http://bblfish.net/people/henry/card#me" rel="foaf:knows" href="#friend55">
+                                                    </td>
+                    </tr>
+                        
+
+                    
+
+                        
+                    <tr typeof="foaf:Person" id="friend56" about="http://foafbuilder.qdos.com/people/tboudreau.myopenid.com/foaf.rdf#me" >
+                        <td><a href="?webid=http://foafbuilder.qdos.com/people/tboudreau.myopenid.com/foaf.rdf#me">View</a>: </td>
+                        <td><span property="foaf:name">Tim Boudreau</span></td>
+                        <td><span href="http://foafbuilder.qdos.com/people/tboudreau.myopenid.com/foaf.rdf#me" rel="rdfs:seeAlso" >http://foafbuilder.qdos.com/people/tboudreau.myopenid.com/foaf.rdf#me</span></td>
+                        <td about="http://bblfish.net/people/henry/card#me" rel="foaf:knows" href="#friend56">
+                                                    </td>
+                    </tr>
+                        
+
+                    
+
+                        
+                    <tr typeof="foaf:Person" id="friend57" about="http://dbpedia.org/resource/Tim_Bray" >
+                        <td><a href="?webid=http://dbpedia.org/resource/Tim_Bray">View</a>: </td>
+                        <td><span property="foaf:name">Tim Bray</span></td>
+                        <td><span href="http://dbpedia.org/resource/Tim_Bray" rel="rdfs:seeAlso" >http://dbpedia.org/resource/Tim_Bray</span></td>
+                        <td about="http://bblfish.net/people/henry/card#me" rel="foaf:knows" href="#friend57">
+                                                    </td>
+                    </tr>
+                        
+
+                    
+
+                        
+                    <tr typeof="foaf:Person" id="friend58" about="http://tobyinkster.co.uk/#i" >
+                        <td><a href="?webid=http://tobyinkster.co.uk/#i">View</a>: </td>
+                        <td><span property="foaf:name">Toby Inkster</span></td>
+                        <td><span href="http://tobyinkster.co.uk/#i" rel="rdfs:seeAlso" >http://tobyinkster.co.uk/#i</span></td>
+                        <td about="http://bblfish.net/people/henry/card#me" rel="foaf:knows" href="#friend58">
+                                                    </td>
+                    </tr>
+                        
+
+                    
+
+                        
+                    <tr typeof="foaf:Person" id="friend59" about="http://purl.org/captsolo/semweb/foaf-captsolo.rdf#Uldis_Bojars" >
+                        <td><a href="?webid=http://purl.org/captsolo/semweb/foaf-captsolo.rdf#Uldis_Bojars">View</a>: </td>
+                        <td><span property="foaf:name">Uldis Bojars</span></td>
+                        <td><span href="http://purl.org/captsolo/semweb/foaf-captsolo.rdf#Uldis_Bojars" rel="rdfs:seeAlso" >http://purl.org/captsolo/semweb/foaf-captsolo.rdf#Uldis_Bojars</span></td>
+                        <td about="http://bblfish.net/people/henry/card#me" rel="foaf:knows" href="#friend59">
+                                                    </td>
+                    </tr>
+                        
+
+                    
+
+                        
+                    <tr typeof="foaf:Person" id="friend60" about="http://xircles.codehaus.org/users/evenisse/foaf#me" >
+                        <td><a href="?webid=http://xircles.codehaus.org/users/evenisse/foaf#me">View</a>: </td>
+                        <td><span property="foaf:name">Venisse Emmanuel</span></td>
+                        <td><span href="http://xircles.codehaus.org/users/evenisse/foaf#me" rel="rdfs:seeAlso" >http://xircles.codehaus.org/users/evenisse/foaf#me</span></td>
+                        <td about="http://bblfish.net/people/henry/card#me" rel="foaf:knows" href="#friend60">
+                                                    </td>
+                    </tr>
+                        
+
+                    
+
+                        
+                    <tr typeof="foaf:Person" id="friend61" about="http://dbpedia.org/resource/Yochai_Benkler" >
+                        <td><a href="?webid=http://dbpedia.org/resource/Yochai_Benkler">View</a>: </td>
+                        <td><span property="foaf:name">Yochai Benkler</span></td>
+                        <td><span href="http://dbpedia.org/resource/Yochai_Benkler" rel="rdfs:seeAlso" >http://dbpedia.org/resource/Yochai_Benkler</span></td>
+                        <td about="http://bblfish.net/people/henry/card#me" rel="foaf:knows" href="#friend61">
+                                                    </td>
+                    </tr>
+                        
+
+                    
+
+                </table>
+                <br/>
+
+                                </div>
+                <!-- end friends tab -->
+
+                                <!-- start activites tab -->
+                <div id="activity">Loading...
+                </div>
+                <!-- end activities tab -->
+                
+                
+                <!-- start accounts tab -->
+                <div id="accounts" class="inputArea">
+                    <h3>Online Accounts</h3><a href='http://twitter.com/bblfish'>http://twitter.com/bblfish</a><br/>
+
+                </div>
+                <!-- end accounts tab -->
+
+                <!-- start interests tab -->
+                <div id="interests">
+                    <table id="intereststable">
+                        <tr><td></td><td>Description</td></tr>
+                        <tr typeof="foaf:OnlineAccount"><td>Interest: </td><td><input size="20" rel="foaf:interest" id="interest1" onchange="makeTags()" type="text" name="interest1" /></td></tr>
+                        <tr typeof="foaf:OnlineAccount"><td>Interest: </td><td><input size="20" rel="foaf:interest" id="interest2" onchange="makeTags()" type="text" name="interest2" /></td></tr>
+                    </table>
+                    <a href="#" onclick="javascript:addi()">Add</a>
+                </div>
+                <!-- end interests tab -->
+
+                <!-- start security tab -->
+                <div id="security">
+                    <h3>Security</h3>0.<br/>Public Key:<br/>BA111346F7555AC5AD4378C73CE0F921FC4F4DD69DCEA0030B6D294E6F8B133CE29812E1CBFD8BCC<br />EB43C7D87A6083A9F1FDB67A267FE32AC7FF4643B7988D1F63BEE924643FB33C5E16859B9B606B02<br />42BC69E91069C6E93F4C4A2CC3FB12887B7190C675FCEF24F10A05669F0E750D7FC9922E958B79D8<br />F3E130821123259F<br/>Exponent: 65537<br/><br /><h3>Coming soon</h3>Edit profile (please use tabulator at the moment)<br/> Privacy control<br/>
+
+                </div>
+                <!-- end security tab -->
+
+            </div>
+            <!-- end tabs container -->
+
+            <script type="text/javascript"> $("#activity").load("tabactivity.php?webid=http://bblfish.net/people/henry/card#me");</script>
+
+                        
+
+
+
+		
+
+            </div>
+        <div class="clear"></div>
+        <div class="footer">
+  
+            Powered&nbsp;by&nbsp;<a href="http://foaf.me">foaf.me</a> (alpha)
+            <p about="" resource="http://www.w3.org/TR/rdfa-syntax"
+                rel="dct:conformsTo" xmlns:dc="http://purl.org/dc/terms/">
+                <a href="http://validator.w3.org/check?uri=referer"><img
+                    src="http://www.w3.org/Icons/valid-xhtml-rdfa-blue"
+                    alt="Valid XHTML + RDFa"   /></a>
+            </p>
+ 
+        </div>
+    </div>
+
+</body>
+
+</html>
+

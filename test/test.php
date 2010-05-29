@@ -1,6 +1,12 @@
 #!/usr/bin/env php
 <?php
 
+class CMP {
+const EQUAL = 1;
+const NEQUAL = 0;
+const ERROR = -1;
+}
+
 function printUsage($msg = '')
 {
     if ($msg)
@@ -82,15 +88,15 @@ function printUsage($msg = '')
      // get remote content
      $t = microtime(true);
      $result['actual'] = http_get($foafURL);
-     $result['msElapsed'] = microtime(true) - $t;
+     $result['sElapsed'] = microtime(true) - $t;
 
      // compare it to the stored expected content if exists
      if (file_exists($expectedFoafPath)) {
         $result['expected'] = file_get_contents($expectedFoafPath);
-        $result['nEquals'] = (strcmp($result['expected'] , $result['actual']) == 0) ? 1 : 0;
+        $result['nEquals'] = (strcmp($result['expected'] , $result['actual']) == 0) ? CMP::EQUAL : CMP::NEQUAL;
      }
      else
-          $result['nEquals'] = -1;
+          $result['nEquals'] = CMP::ERROR;
 
      return $result;
  }
@@ -111,14 +117,14 @@ function printUsage($msg = '')
      if (!$targetDir)
         $targetDir = dirname(__FILE__);
      $compareResult = compareToExpected($foafURL, $targetDir."/".URL2FileName($foafURL));
-     echo "GET ".$foafURL." completed in ".$compareResult['msElapsed']." ms.\n";
+     echo "GET ".$foafURL." completed in ".$compareResult['sElapsed']." s.\n";
      echo "Comparing ".$foafURL." with expected content";
 
      switch ($compareResult['nEquals']) {
-         case 1:
+         case CMP::EQUAL :
             echo " [OK]\n";
          break;
-         case 0:
+         case CMP::NEQUAL :
             echo " [FAILED]\n";
             file_put_contents('expected.tmp', $compareResult['expected']."\n");
             file_put_contents('actual.tmp', $compareResult['actual']."\n");
@@ -130,24 +136,64 @@ function printUsage($msg = '')
 
  }
 
- function executeProfiling()
+ function stddev($values) {
+     if (count($values) < 2)
+         return 0;
+     $mean = array_sum($values) / count($values);
+     foreach ($values as $value) {
+         $sq[] = ($value - $mean)*($value - $mean);
+     }
+     return sqrt(array_sum($sq)/(count($values) - 1));
+ }
+
+ function displayStats($testStats) {
+
+     echo  $testStats['total']." requests:".
+            "Success(".$testStats[CMP::EQUAL]."),".
+            "Mismatch(".$testStats[CMP::NEQUAL]."),".
+            "Error(".$testStats[CMP::ERROR].")\n";
+     echo  "Average response time ".$testStats['sAvgElapsed']." (s)\n";
+     echo  "Max response time     ".$testStats['sMaxElapsed']." (s)\n";
+     echo  "Min response time     ".$testStats['sMinElapsed']." (s)\n";
+     echo  "Std deviation         ".$testStats['sStdDevElapsed']." (s)\n";
+
+ }
+
+ function computeTimeStats($testStats)
  {
+     $testStats['sAvgElapsed'] = array_sum($testStats['sElapsed']) / $testStats['total'];
+     $testStats['sMaxElapsed'] = max($testStats['sElapsed']);
+     $testStats['sMinElapsed'] = min($testStats['sElapsed']);
+     $testStats['sStdDevElapsed'] = stddev($testStats['sElapsed']);
+     return $testStats;
+ }
+
+ function executeProfiling($testCountPerURL = 3) {
+
+     if (!$testCountPerURL)
+         $testCountPerURL = 3;
+
     foreach (get_files_in_directory('.','/.*\.expected/') as $fname) {
         echo "Testing if ".FileName2URL($fname)." equals to the expected sample...";
 
-        $result = compareToExpected(FileName2URL($fname),$fname);
-      
-        switch ($result['nEquals']) {
-            case 1:
-                echo "[OK]\n";
-            break;
-            case 0:
-                echo "[FAILED]\n";
-            break;
-            default:
-                echo "[DUBIOUS]\n";
+        $testStats[CMP::EQUAL] = 0; $testStats[CMP::NEQUAL] = 0; $testStats[CMP::ERROR] = 0;
+        $testStats['total'] = $testCountPerURL;
+        for($testNo = 0; $testNo < $testCountPerURL; $testNo++) {
+            $result = compareToExpected(FileName2URL($fname),$fname);
+            $testStats[$result['nEquals']]++;
+            $testStats['sElapsed'][] = $result['sElapsed'];
         }
 
+        $testStats = computeTimeStats($testStats);
+
+        if ($testCountPerURL == $testStats[CMP::EQUAL]) {
+           echo "[OK]\n";
+        }
+        else
+        {
+           echo "[FAILED]\n";
+        }
+        displayStats($testStats);
     }
  }
 
@@ -163,6 +209,8 @@ switch ($command) {
         printUsage();
         break;
     case 'profiling':
+        executeProfiling(getarg(2));
+        break;
     default:
         executeProfiling();
         exit;

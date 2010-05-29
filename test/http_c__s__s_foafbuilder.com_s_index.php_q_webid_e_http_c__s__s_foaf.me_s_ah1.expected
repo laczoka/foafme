@@ -1,0 +1,409 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML+RDFa 1.0//EN"
+    "http://www.w3.org/MarkUp/DTD/xhtml-rdfa-1.dtd">
+<!--
+ * FOAF Me : FOAF Me Home Page and FOAF creator wizard.
+ * Copyright (c) http://foaf.me/
+ * AGPL (AGPL-license.txt) license.
+ *
+-->
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:xsd="http://www.w3.org/2001/XMLSchema#"
+      xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+      xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+      xmlns:dc="http://purl.org/dc/elements/1.1/"
+      xmlns:dcterms="http://purl.org/dc/terms/"
+      xmlns:foaf="http://xmlns.com/foaf/0.1/"
+      xmlns:vcard="http://www.w3.org/2006/vcard/ns#"
+      xmlns:biografr="http://biografr.com/ontology#">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+        <meta http-equiv="Content-Style-Type" content="text/css" />
+        <meta http-equiv="Content-Script-Type" content="text/javascript" />
+        <title>FOAF Me</title>
+        <link rel="stylesheet" href="css/jquery.tabs.css" type="text/css" media="print, projection, screen" />
+        <!--
+        <link rel="shortcut icon" href="/img/favicon.png" type="image/png" />	
+        -->
+        <link rel="stylesheet" type="text/css" title="default" href="css/main.css" />
+        <link rel="shortcut icon" href="favicon.ico" type="image/x-icon" />
+        <script type="text/javascript" src="js/jquery/1.3.1/jquery.min.js"></script>
+        <script type="text/javascript" src="js/jquery/jquery.tabs.pack.js"></script>
+        <script type="text/javascript" src="js/jquery.rdfquery.core-1.0.js"></script>
+        <script type="text/javascript" src="js/jquery.rdfquery.rdfa-1.0.js"></script>
+        <script type="text/javascript" src="js/jquery.rdfquery.rules-1.0.js"></script>
+        <script type="text/javascript" src="js/jquery.editinplace.js"></script>
+        <script type="text/javascript" src="js/jquery.json-1.3.js"></script>
+
+
+        <link rel="stylesheet" href="css/jquery.tabs-ie.css" type="text/css" media="projection, screen" />
+        <link href="favicon.ico" rel="shortcut icon" type="image/x-icon" />
+
+        <script type="text/javascript">
+            // <!--
+
+            /* JQuery Script */
+            /*****************/       
+
+            // Initialise page
+            $(function() {
+                $('#container').tabs({ fxFade: true, fxSpeed: 'fast' });
+                gGeneratorAgent = 'http://foafbuilder.com';
+                gErrorReportsTo = 'mailto:error@foafbuilder.com';
+                makeTags();
+            });
+
+
+            // TODO: make this more generic
+            function adda() {
+                $("#accounts tr:last").clone().appendTo("#accountstable");
+            }
+
+            // TODO: make this more generic
+            function addi() {
+                $("#interests tr:last").clone().appendTo("#intereststable");
+            }
+
+            // TODO: make this more generic
+            function del(el) {
+                str = "#" + el;
+                frag = $(str).parent().parent().rdf().databank.triples()[0].subject.value;
+
+                var re = new RegExp("[0-9A-Za-z]*$","ig");
+                var resultArray = re.exec(frag);
+
+                while (resultArray) {
+                    frag = resultArray[0];
+                    resultArray = re.exec(str);
+                }
+
+                frag = "#" + frag;
+                var sparul = 'DELETE { ';
+                $(str).parent().parent().rdf().databank.triples().each(function () { sparul += this + ' '; } );
+                sparul += ' } ';
+                //alert('DELETE:  This funcionality is in Alpha ' + sparul);
+                jQuery.post( 'http://foaf.me/ah1', sparul );
+
+                $(str).parent().parent().remove();
+                //location.reload();
+            }
+
+
+            // TODO: use RDFQuery for this
+            function makeTags() {
+
+                // set uri from nick
+                if ( $("#nick").val() != "" ) {
+                    $("#username").val($("#nick").val());
+                } else {
+                    return;
+                }
+
+                // set homepage from nick
+                if ( $("#homepage").val() == "") {
+                                        $("#homepage").val( "http://foafbuilder.com/" + $("#nick").val() );
+                    $("#displayname").html( "http://foafbuilder.com/" + $("#nick").val() + "#me" );
+                    $("#saving").css("display", "inline");;
+                }
+
+                rdf  = '<rdf:RDF xmlns:rdf=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#\"\n      ' +
+                    'xmlns:rdfs=\"http://www.w3.org/2000/01/rdf-schema#\"\n      ' +
+                    'xmlns:foaf=\"http://xmlns.com/foaf/0.1/\"\n      ' +
+                    'xmlns:rsa=\"http://www.w3.org/ns/auth/rsa#\"\n      ' +
+                    'xmlns:cert=\"http://www.w3.org/ns/auth/cert#\"\n      ' +
+                    'xmlns:admin=\"http://webns.net/mvcb/\">\n';
+
+                // preprocess
+
+                // PersonalProfileDocument
+                $("[typeof=foaf:PersonalProfileDocument]") .each(function (i) {
+                    rdf += makeStartTag(this);
+                    $(this).find("[property],[rel]").each( function(){ rdf += (makeTag(this)) ; }  );
+                    rdf += makeEndTag(this);
+
+                });
+
+                // Person #me
+                $("[typeof=foaf:Person]:first").each(function (i) {
+
+                    // Profile
+                    rdf += makeStartTag(this);
+                    $("#me").find("[property],[rel]").each( function(){ rdf += (makeTag(this)) }  );
+                    $("#accounts").find("[property],[rel]").each( function(){ rdf += (makeTag(this)) }  );
+                    $("#interests").find("[property],[rel]").each( function(){ rdf += (makeTag(this)) }  );
+
+                    // Friends tab
+                    var friends = '';
+                    $("#friends [typeof=foaf:Person]").each(function (i) {
+                        var friend = ''
+                        $(this).find("[property],[rel]").each( function(){ friend += '' + makeTag(this)? '        ' + makeTag(this):'' ; }  );
+                        if (friend) {
+                            friends = '        ' + makeStartTag(this);
+                            friends += friend;
+                            friends += '        ' + makeEndTag(this);
+                            rdf += '    <foaf:knows>\n';
+                            rdf += friends;
+                            rdf += '    </foaf:knows>\n';
+                        }
+                    });
+
+                    rdf += makeEndTag(this);
+                });
+
+                // Security tab
+                var id = '';
+                var cert = '';
+                $("#security [typeof]").each(function (i) {
+                    $(this).parent().find("[property],[rel]").each( function(){ cert += '' + makeTag(this)? '        ' + makeTag(this):'' ; }  );
+                    if (cert) {
+                        id += '    ' + makeStartTag(this);
+                        id += cert;
+                        id += '    ' + makeEndTag(this);
+                    }
+                });
+                if (id) {
+                    rdf += '<rdf:Description>\n<rdf:type rdf:resource="http://www.w3.org/ns/auth/rsa#RSAPublicKey"/>\n<cert:identity rdf:resource="#me"/>\n';
+                    rdf += cert;
+                    rdf += '</rdf:Description>\n';
+                }
+
+                rdf += '</rdf:RDF>\n'
+                //alert(rdf);
+                $("#rdf").val(rdf);
+            }
+
+            function makeStartTag(el) {
+                var about = $(el).attr("about") ? $(el).attr("about") : $(el).find("[rel]").val() ;
+                return '<' + $(el).attr("typeof")  + (about?(' rdf:ID="'+about+'"'):(' rdf:about=""'))  + '>\n';
+            }
+
+            function makeEndTag(el) {
+                return '</' + $(el).attr("typeof") + '>\n';
+            }
+
+
+            function makeTag(el) {
+                var prop   = $(el).attr("property");
+                var type   = $(el).attr("typeof");
+                var about  = $(el).attr("about");
+                var rel    = $(el).attr("rel");
+                var val    = $(el).val();
+                var cl     = $(el).attr("class");
+
+                var inner  = '';
+                if (cl && cl.indexOf(':') != -1) {
+                    inner = cl;
+                }
+
+                var href   = $(el).attr("href")?$(el).attr("href"):val;
+
+                if (!val && !href) return '';
+                if (rel)           return '    <' + rel  + ' rdf:resource="'+ href +'"' + '/>\n';
+                if (prop)          return '    <' + prop + ((inner)?' rdf:parseType="Resource"':'') + '>' + (inner?'<'+inner+'>':'') + val + (inner?'</'+inner+'>':'') + '</' + prop + '>' + '\n';
+                if (type)          return '    <' + type + ' rdf:ID="'+ about +'"' + '>' + '</' + type + '>' + '\n';
+
+            }
+
+            // -->
+        </script>
+
+
+
+
+    </head>
+
+<body>
+    <div id="wrap">
+        <div id="header">
+            <a href="index.php">Home</a> | <a href="http://foaf.me/index.php?webid=http://www.w3.org/People/Berners-Lee/card">Explore FOAFs</a> | <a href="about.php">About</a> | <a href="documentation.php">Documentation</a> | <a href="downloads.php">Downloads</a> | <a href="http://groups.google.com/group/foafme?lnk=srg&amp;hl=en&amp;ie=UTF-8&amp;oe=utf-8">Mailing List</a>
+
+                        <span id="user">
+                <a id="account" href="https://foafssl.org/srv/idp?authreqissuer=http://foafbuilder.com/index.php">
+                    Login to your <strong>account</strong>
+                </a>
+                <br />
+            </span>
+            
+        </div>
+
+
+        <div id="content">
+
+            <h1>
+                <img alt="foaf" src="images/foaf.gif" />
+                <strong>FOAF</strong>
+            </h1>
+
+            <h2></h2>
+
+
+
+
+
+            <!-- personal profile document -->
+            <div style="display:none" typeof="foaf:PersonalProfileDocument" about="">
+                <span rel="foaf:maker" href="#me"></span>
+                <span rel="foaf:primaryTopic" href="#me"></span>
+            </div>
+
+            <!-- start tabs container -->
+            <div id="container" typeof="foaf:Person" about="me">
+                <ul>
+                    <li style="list-style-image: none"><a href="#me"><span>Me</span></a></li>
+                    <li style="list-style-image: none"><a href="#friends"><span>Friends</span></a></li>
+                    <li style="list-style-image: none"><a href="#accounts"><span>Accounts</span></a></li>
+                    <li style="list-style-image: none"><a href="#security"><span>Security</span></a></li>
+                                        <li style="list-style-image: none"><a href="#activity"><span>Activity</span></a></li>
+                                                        </ul>
+
+                <!-- start me tab -->
+                <div id="me" class="inputArea">
+                    <script type='text/javascript' src='http://foaf-visualizer.org/embed/widget/?uri=http://foaf.me/ah1#me' ></script>            <script type='text/javascript'>
+            $("a").each( function() {
+               this.href = this.href.replace(/foaf-visualizer.org..uri=/g,"foaf.me/index.php?webid=");
+            });
+            </script>
+        <h2>Other Visualisations</h2><a target='_blank' href='http://www.foafer.org/?file=http://foaf.me/ah1#me'>Foafer</a><br/><a target='_blank' href='http://foaf.qdos.com/find/?q=http://foaf.me/ah1#me'>Qdos</a><br/><a target='_blank' href='http://www5.wiwiss.fu-berlin.de/marbles?uri=http%3A%2F%2Ffoaf.me%2Fah1%23me'>Marbles</a><br/><a target='_blank' href='http://sig.ma/search?q=http%3A%2F%2Ffoaf.me%2Fah1%23me'>Sig.ma</a><br/><br/><a target='_blank' href='http://linkeddata.uriburner.com/ode/?uri=http://foaf.me/ah1#me'>OpenLink Data Explorer</a><br/><a target='_blank' href='http://xml.mfd-consult.dk/foaf/explorer/?foaf=http://foaf.me/ah1#me'>Foaf Explorer</a><br/><a target='_blank' href='http://dataviewer.zitgist.com/?uri=http://foaf.me/ah1#me'>Zitgist</a><br/><a target='_blank' href='http://foafmap.net/?foaf=http://foaf.me/ah1#me'>Foaf MAP</a><br/>
+                </div>
+                <!-- end me tab -->
+
+
+                <!-- start friends tab -->
+                <div id="friends" class="inputArea">
+                    
+
+                <script type="text/javascript">
+                    // TODO: make this more generic
+                    function sparul() {
+                        $("span[property]").editInPlace({ url: 'sparul.php' , params: 'uri=http://foaf.me/ah1#me' });
+                        $("span[rel]").editInPlace({ url: 'sparul.php' , params: 'uri=http://foaf.me/ah1#me' });
+                    }
+
+
+                    <!--
+                    // function to add a friend
+                    function addf(el) {
+
+                        // empty list
+                        // clone it
+                        // replace numbers
+                        // make sure fields are blank
+                        if ($(el).prevAll().find("tr:last input").attr("type") === 'text' ) {
+
+                            var about = $(el).prevAll().find(" tr:last").attr("about");
+                            var lastFriend = (about != undefined) ? about.replace(/[^0-9]*/, "") : -1;
+
+                            lastFriend++;
+                            var clone = $("#friendstable tr:last").clone();
+
+                            clone.attr({about : 'friend' + lastFriend });
+                            clone.appendTo("#friendstable");
+
+                            return;
+                        }
+
+                        // edit in place
+                        var last = $("#friendstable tr:last");
+                        if (last == null) {
+                        } else {
+                            var about = $("#friendstable tr:last").attr("about");
+                            var lastFriend = about != undefined? about.replace(/.*friend/, "") : -1;
+                            lastFriend++;
+                            //alert (lastFriend)
+                            $("#friendstable tr:last").after("<tr about='#friend"+lastFriend+"' typeof='foaf:Person' ><td>Friend</td><td><span property='foaf:name'></span></td><td><a rel='refs:seeAlso'></a></td><td about='http://foaf.me/ah1#me' rel='foaf:knows' href='#friend"+lastFriend+"' ><a>x</a></td></tr>");
+
+                            sparul();
+                        }
+
+
+                    }
+                    // -->
+                </script>
+
+                <h2>Friends</h2>
+                <table id="friendstable" about="http://foaf.me/ah1#me">
+                                        <tr>
+                        <td></td>
+                        <td>Name</td><td>URL</td>
+                    </tr>
+                    
+                    
+
+                        
+                    <tr typeof="foaf:Person" id="friend0" about="http://foaf.me/ah1#friend0" >
+                        <td><a href="?webid=http://foaf.me/ah1#friend0">View</a>: </td>
+                        <td><span property="foaf:name">Henry Story</span></td>
+                        <td><span href="http://foaf.me/ah1#friend0" rel="rdfs:seeAlso" >http://foaf.me/ah1#friend0</span></td>
+                        <td about="http://foaf.me/ah1#me" rel="foaf:knows" href="#friend0">
+                                                    </td>
+                    </tr>
+                        
+
+                    
+
+                </table>
+                <br/>
+
+                                </div>
+                <!-- end friends tab -->
+
+                                <!-- start activites tab -->
+                <div id="activity">Loading...
+                </div>
+                <!-- end activities tab -->
+                
+                
+                <!-- start accounts tab -->
+                <div id="accounts" class="inputArea">
+                    <h3>Online Accounts</h3>No online accounts discovered
+
+                </div>
+                <!-- end accounts tab -->
+
+                <!-- start interests tab -->
+                <div id="interests">
+                    <table id="intereststable">
+                        <tr><td></td><td>Description</td></tr>
+                        <tr typeof="foaf:OnlineAccount"><td>Interest: </td><td><input size="20" rel="foaf:interest" id="interest1" onchange="makeTags()" type="text" name="interest1" /></td></tr>
+                        <tr typeof="foaf:OnlineAccount"><td>Interest: </td><td><input size="20" rel="foaf:interest" id="interest2" onchange="makeTags()" type="text" name="interest2" /></td></tr>
+                    </table>
+                    <a href="#" onclick="javascript:addi()">Add</a>
+                </div>
+                <!-- end interests tab -->
+
+                <!-- start security tab -->
+                <div id="security">
+                    <h3>Security</h3>0.<br/>Public Key:<br/>AD7E2671256E9140FD6A371027E74E5088AA20A40D21246CEA869DF554DE4F427A671539C8F70D0D<br />68604004AD429C94E271D6E9C07335270034A2AC1882B2C7EF8E809D01D4F269FE7EF28C404D609C<br />EA8C7C15194D085976EC6D36AD119EB3E327975CE4B4E7EDF625B10F82C48FBAF738906308D16AC5<br />03C909D29CBDB45DCD1620428F426BB2BB58140BC7F5B9A8FEECF36CB114D538C02DA1C395AF2422<br />67A275E30DEAD87C48BAC3FA8A43CC95CEFA4068B48E06040EE1980A54913CAE404700FB1E20C775<br />0B25FEE62FAF34F5C0B0515F0AF89BF0A4D553664E0273F4EAAAE553260CAD1DEF8625BF87F77980<br />513C0DB45AE8BB312338098339967165<br/>Exponent: 65537<br/><br /><h3>Coming soon</h3>Edit profile (please use tabulator at the moment)<br/> Privacy control<br/>
+
+                </div>
+                <!-- end security tab -->
+
+            </div>
+            <!-- end tabs container -->
+
+            <script type="text/javascript"> $("#activity").load("tabactivity.php?webid=http://foaf.me/ah1#me");</script>
+
+                        
+
+
+
+		
+
+            </div>
+        <div class="clear"></div>
+        <div class="footer">
+  
+            Powered&nbsp;by&nbsp;<a href="http://foaf.me">foaf.me</a> (alpha)
+            <p about="" resource="http://www.w3.org/TR/rdfa-syntax"
+                rel="dct:conformsTo" xmlns:dc="http://purl.org/dc/terms/">
+                <a href="http://validator.w3.org/check?uri=referer"><img
+                    src="http://www.w3.org/Icons/valid-xhtml-rdfa-blue"
+                    alt="Valid XHTML + RDFa"   /></a>
+            </p>
+ 
+        </div>
+    </div>
+
+</body>
+
+</html>
+
