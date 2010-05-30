@@ -178,6 +178,8 @@ function printUsage($msg = '')
 
         $testStats[CMP::EQUAL] = 0; $testStats[CMP::NEQUAL] = 0; $testStats[CMP::ERROR] = 0;
         $testStats['total'] = $testCountPerURL;
+        $testStats['sElapsed'] = array();
+        
         for($testNo = 0; $testNo < $testCountPerURL; $testNo++) {
             $result = compareToExpected(FileName2URL($fname),$fname);
             $testStats[$result['nEquals']]++;
