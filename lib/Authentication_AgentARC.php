@@ -111,8 +111,6 @@ class Authentication_AgentARC extends Authentication_AgentAbstract {
             $this->ARCStore = $store;
         }
 
-        $this->ARCStore->reset();
-
         /* LOAD will call the Web reader, which will call the
 	   format detector, which in turn triggers the inclusion of an
 	   appropriate parser, etc. until the triples end up in the store. */
