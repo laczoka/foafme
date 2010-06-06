@@ -35,7 +35,7 @@ $auth = new Authentication_FoafSSLARC($GLOBALS['config'], NULL, FALSE);
 
 
     <div id="diagnostics">
-        <?
+        <?php
         if ($_SERVER['SSL_CLIENT_CERT']) {
             $certModulus = $auth->certModulus;
             $certExponent = $auth->certExponent;
@@ -118,7 +118,7 @@ $auth = new Authentication_FoafSSLARC($GLOBALS['config'], NULL, FALSE);
 	xmlns:rsa="http://www.w3.org/ns/auth/rsa#">
 
 <rsa:RSAPublicKey>
-   <cert:identity rdf:resource="<? echo $subjectAltName ?>"/>
+   <cert:identity rdf:resource="<?php echo $subjectAltName ?>"/>
    <rsa:public_exponent cert:decimal="<?php echo $certExponent ?>"/>
    <rsa:modulus cert:hex="<?php echo $certModulus ?>"/>
 </rsa:RSAPublicKey>
