@@ -14,9 +14,9 @@ function printUsage($msg = '')
 
     echo "Usage: ".basename(__FILE__)." \n".
          "  help \n".
-         "  store [foafURL] [--targetdir=DIR]\n".
-         "  single [foafURL] [--expecteddir=DIR]\n".
-         "  profiling [foafURL] [--expecteddir=DIR]\n".
+         "  store [foafURL] [client_cert_file] [client_private_key_file]\n".
+         "  single [foafURL] [client_cert_file] [client_private_key_file]\n".
+         "  profiling [test count] [client_cert_file] [client_private_key_file]\n".
             "\n";
 }
 
@@ -115,22 +115,25 @@ function printUsage($msg = '')
      return $result;
  }
 
- function executeStore($foafURL, $targetDir = NULL) {
-    if (1 > strlen($foafURL))
+ function executeStore($foafURL,  $pathToCert = NULL, $pathToPrivKey = NULL) {
+    
+ 	if (1 > strlen($foafURL))
         $foafURL = 'http://foaf.me/melvincarvalho';
-    if (!$targetDir)
-        $targetDir = dirname(__FILE__);
-
-    $response = http_get($foafURL);
+    
+    $targetDir = dirname(__FILE__);
+    echo "Storing ".$foafURL." response to\n";
+    echo $targetDir."/".URL2FileName($foafURL)."\n";
+    $response = http_get($foafURL, $pathToCert, $pathToPrivKey);
     file_put_contents($targetDir."/".URL2FileName($foafURL), $response);
  }
 
- function executeSingleTest($foafURL, $targetDir = NULL) {
+ function executeSingleTest($foafURL, $pathToCert = NULL, $pathToPrivKey = NULL) {
      if (1 > strlen($foafURL))
         $foafURL = 'http://foaf.me/melvincarvalho';
-     if (!$targetDir)
-        $targetDir = dirname(__FILE__);
-     $compareResult = compareToExpected($foafURL, $targetDir."/".URL2FileName($foafURL));
+     
+     $targetDir = dirname(__FILE__);
+     $compareResult = compareToExpected($foafURL, $targetDir."/".URL2FileName($foafURL), 
+                                            $pathToCert, $pathToPrivKey);
      echo "GET ".$foafURL." completed in ".$compareResult['sElapsed']." s.\n";
      echo "Comparing ".$foafURL." with expected content";
 
@@ -215,11 +218,11 @@ function printUsage($msg = '')
 
 switch ($command) {
     case 'store':
-        executeStore(getarg(2), getarg(3));
+        executeStore(getarg(2),getarg(3),getarg(4));
         break;
     
     case 'single':
-        executeSingleTest(getarg(2), getarg(3));
+        executeSingleTest(getarg(2), getarg(3),getarg(4));
         break;
     case 'help':
         printUsage();

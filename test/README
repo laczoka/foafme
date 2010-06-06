@@ -1,0 +1,21 @@
+Testing page content
+
+1. Create an expected result either by hand, or issuing
+
+./test.php store URL
+
+where URL is the URL of the page you want to test
+
+2. Run multiple tests by issuing
+
+./test.php profiling [test_count] [path_to_client_certificate] [path_to_client_private_key]
+
+All parameters are optional.
+
+The certificate and private key are only interesting if the Foaf+SSL native login is being tested.
+
+They should be in a PEM format.
+
+The provide sample certificate and private key belong the the http://foaf.me/sample#me webid.
+If this Foaf file is no longer available, please create a new one and export the certificate and the private key, so that you are able to pass them into the test script
+
