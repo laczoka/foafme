@@ -64,8 +64,18 @@ function printUsage($msg = '')
     return $url;
  }
 
- function http_get($url) {
+ function http_get($url, $pathToCert = NULL, $pathToPrivKey = NULL) {
     $ch = curl_init($url);
+    if ($pathToCert && $pathToPrivKey) {
+        curl_setopt($ch, CURLOPT_SSLCERT, $pathToCert);
+        curl_setopt($ch, CURLOPT_SSLKEY, $pathToPrivKey);
+    }
+    if (FALSE !== strrpos($url,'https://')) {
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, FALSE);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, FALSE);
+        curl_setopt($ch, CURLOPT_CAINFO, NULL);
+        curl_setopt($ch, CURLOPT_CAPATH, NULL); 
+    }
     curl_setopt($ch, CURLOPT_HEADER, 0);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
     $content = curl_exec($ch);
@@ -83,17 +93,21 @@ function printUsage($msg = '')
     return $files;
  }
 
- function compareToExpected($foafURL,$expectedFoafPath)  {
+ function compareToExpected($foafURL,$expectedFoafPath,$pathToCert = NULL,$pathToPrivKey = NULL)  {
 
      // get remote content
      $t = microtime(true);
-     $result['actual'] = http_get($foafURL);
+     $result['actual'] = http_get($foafURL, $pathToCert, $pathToPrivKey);
      $result['sElapsed'] = microtime(true) - $t;
 
      // compare it to the stored expected content if exists
      if (file_exists($expectedFoafPath)) {
         $result['expected'] = file_get_contents($expectedFoafPath);
         $result['nEquals'] = (strcmp($result['expected'] , $result['actual']) == 0) ? CMP::EQUAL : CMP::NEQUAL;
+        if (CMP::NEQUAL == $result['nEquals'])
+        {
+        	file_put_contents($expectedFoafPath.".diff", $result['actual']);
+        }
      }
      else
           $result['nEquals'] = CMP::ERROR;
@@ -168,7 +182,7 @@ function printUsage($msg = '')
      return $testStats;
  }
 
- function executeProfiling($testCountPerURL = 3) {
+ function executeProfiling($testCountPerURL = 3,$pathToCert = NULL,$pathToPrivKey = NULL) {
 
      if (!$testCountPerURL)
          $testCountPerURL = 3;
@@ -181,7 +195,7 @@ function printUsage($msg = '')
         $testStats['sElapsed'] = array();
         
         for($testNo = 0; $testNo < $testCountPerURL; $testNo++) {
-            $result = compareToExpected(FileName2URL($fname),$fname);
+            $result = compareToExpected(FileName2URL($fname),$fname,$pathToCert,$pathToPrivKey);
             $testStats[$result['nEquals']]++;
             $testStats['sElapsed'][] = $result['sElapsed'];
         }
@@ -211,7 +225,7 @@ switch ($command) {
         printUsage();
         break;
     case 'profiling':
-        executeProfiling(getarg(2));
+        executeProfiling(getarg(2),getarg(3),getarg(4));
         break;
     default:
         executeProfiling();
