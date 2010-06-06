@@ -68,8 +68,6 @@ class Authentication_FoafSSLARC extends Authentication_FoafSSLAbstract
                 $store->setUp();
             }
 
-            $store->reset();
-
             /* LOAD will call the Web reader, which will call the
                format detector, which in turn triggers the inclusion of an
                appropriate parser, etc. until the triples end up in the store. */
@@ -96,8 +94,10 @@ class Authentication_FoafSSLARC extends Authentication_FoafSSLAbstract
 
         if ($rows = $this->ARCStore->query($q, 'rows')) {
             foreach ($rows as $row) {
-//                    print "primaryTopic " . $row['primaryTopic'] . "<br/>";
-                    $primaryId = $row['primaryTopic'];
+                if (0==strcmp($row['x'],$this->agentURI)) {
+                   $this->log->stop(); // match found
+                   $primaryId = $row['primaryTopic'];
+                }
             }
         }
 	/* list names */
