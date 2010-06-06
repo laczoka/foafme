@@ -118,9 +118,9 @@ $auth = new Authentication_FoafSSLARC($GLOBALS['config'], NULL, FALSE);
 	xmlns:rsa="http://www.w3.org/ns/auth/rsa#">
 
 <rsa:RSAPublicKey>
-   <cert:identity rdf:resource="<?= $subjectAltName[URI] ?>"/>
-   <rsa:public_exponent cert:decimal="65537"/>
-   <rsa:modulus cert:hex="<? print_r($cert_rsakey['modulus']); ?>"/>
+   <cert:identity rdf:resource="<? echo $subjectAltName ?>"/>
+   <rsa:public_exponent cert:decimal="<?php echo $certExponent ?>"/>
+   <rsa:modulus cert:hex="<?php echo $certModulus ?>"/>
 </rsa:RSAPublicKey>
 
 </rdf:RDF>
@@ -132,12 +132,12 @@ $auth = new Authentication_FoafSSLARC($GLOBALS['config'], NULL, FALSE);
         <textarea rows=10 cols=200>
 <span typeof="rsa:RSAPublicKey">
 <div about="#cert" typeof="rsa:RSAPublicKey">
-  <div rel="cert:identity" href="$subjectAltName[URI]"></div>
+  <div rel="cert:identity" href="<?php echo $subjectAltName?>"></div>
   <div rel="rsa:public_exponent">
-    <div property="cert:decimal" content="65537"></div>
+    <div property="cert:decimal" content="<?php echo $certExponent ?>"></div>
   </div>
   <div rel="rsa:modulus">
-    <div property="cert:hex" content="<? print_r($cert_rsakey['modulus']); ?>"></div>
+    <div property="cert:hex" content="<?php echo $certModulus ?>"></div>
   </div>
 </div>
 </span>
