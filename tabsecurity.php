@@ -59,7 +59,7 @@ if ( $foafRequest->isAuth || !empty($_REQUEST['webid']) ) {
                 <input type="hidden" id="uri" name="uri" value="<?php echo $_REQUEST['webid'] ?>">
                 </div>
                 </form>
-                <a href="https://foaf.me/simpleLogin.php">Test</a>
+                <a href="https://<?php echo $_SERVER[HTTP_HOST] ?>/simpleLogin.php">Test</a>
     <?php     }
 
 
