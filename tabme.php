@@ -41,7 +41,7 @@ if ($webid) {
         ?>
             <script type='text/javascript'>
             $("a").each( function() {
-               this.href = this.href.replace(/foaf-visualizer.org..uri=/g,"foaf.me/index.php?webid=");
+               this.href = this.href.replace(/foaf-visualizer.org..uri=/g,"<?php echo $_SERVER[HTTP_HOST] ?>/index.php?webid=");
             });
             </script>
         <?php
